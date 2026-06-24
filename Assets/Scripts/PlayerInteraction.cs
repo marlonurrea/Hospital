@@ -36,12 +36,6 @@ public class PlayerInteraction : MonoBehaviour
         {
             cameraTransform = Camera.main.transform;
         }
-
-        // Advertencia si la máscara de capas no está configurada
-        if (interactableMask.value == 0)
-        {
-            Debug.LogWarning("<b>[PlayerInteraction]</b> La máscara de capas (Interactable Mask) está configurada como 'Nothing'. Asegúrate de seleccionar la capa de tus objetos interactuables en el Inspector.");
-        }
     }
 
     void Update()
@@ -52,12 +46,8 @@ public class PlayerInteraction : MonoBehaviour
         // 2. Comprobar si el jugador presiona la tecla de interacción
         bool interactPressed = false;
 
-        // Leer teclado (Tecla E) con soporte para nuevo Input System y fallback al sistema clásico (Old Input System)
+        // Leer teclado (Tecla E por defecto)
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-        {
-            interactPressed = true;
-        }
-        else if (Input.GetKeyDown(KeyCode.E))
         {
             interactPressed = true;
         }
@@ -69,42 +59,9 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         // 3. Ejecutar la interacción
-        if (interactPressed)
+        if (interactPressed && currentInteractable != null)
         {
-            if (currentInteractable != null)
-            {
-                Debug.Log($"<b>[PlayerInteraction]</b> Interactuando con: {currentInteractable.GetInteractPrompt()}");
-                currentInteractable.Interact();
-            }
-            else
-            {
-                Debug.Log("<b>[PlayerInteraction]</b> Se presionó interactuar, pero no hay ningún objeto interactuable cerca.");
-
-                // Diagnóstico detallado para ayudar al usuario a ver qué está pasando en la consola de Unity
-                MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-                string diagnosticMsg = "<b>[PlayerInteraction - Diagnóstico de Interacción]</b>\n";
-                int count = 0;
-                foreach (MonoBehaviour mono in allScripts)
-                {
-                    if (mono is IInteractable)
-                    {
-                        count++;
-                        float dist = Vector3.Distance(transform.position, mono.transform.position);
-                        Collider col = mono.GetComponentInChildren<Collider>();
-                        if (col == null) col = mono.GetComponentInParent<Collider>();
-                        
-                        diagnosticMsg += $"- <b>{mono.gameObject.name}</b>:\n" +
-                                         $"  • Distancia al jugador: {dist:F2}m (Rango requerido: Esfera = {sphereRadius}m, Raycast = {interactionDistance}m)\n" +
-                                         $"  • ¿Tiene Collider?: {(col != null ? "SÍ" : "NO")}\n" +
-                                         $"  • Capa (Layer): {LayerMask.LayerToName(mono.gameObject.layer)}\n";
-                    }
-                }
-                if (count == 0)
-                {
-                    diagnosticMsg += "¡ATENCIÓN! No se encontró ningún script en la escena que implemente IInteractable (como NPCInteraction o ObjectInteractTest).";
-                }
-                Debug.LogWarning(diagnosticMsg);
-            }
+            currentInteractable.Interact();
         }
     }
 
@@ -118,46 +75,21 @@ public class PlayerInteraction : MonoBehaviour
             Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
             RaycastHit hit;
 
-            bool hitSomething = false;
-            if (interactableMask.value != 0)
+            if (Physics.Raycast(ray, out hit, interactionDistance, interactableMask))
             {
-                hitSomething = Physics.Raycast(ray, out hit, interactionDistance, interactableMask);
-            }
-            else
-            {
-                hitSomething = Physics.Raycast(ray, out hit, interactionDistance);
-            }
-
-            if (hitSomething)
-            {
-                // Intentar obtener el componente que implementa IInteractable (se busca también en los padres)
-                foundInteractable = hit.collider.GetComponentInParent<IInteractable>();
+                // Intentar obtener el componente que implementa IInteractable
+                foundInteractable = hit.collider.GetComponent<IInteractable>();
             }
         }
         else if (detectionMethod == DetectionMethod.SphereCheckFromPlayer)
         {
             // Buscar colisionadores en una esfera alrededor del jugador
-            Collider[] colliders;
-            if (interactableMask.value != 0)
-            {
-                colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask);
-            }
-            else
-            {
-                colliders = Physics.OverlapSphere(transform.position, sphereRadius);
-            }
-            
+            Collider[] colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask);
             float closestDistance = Mathf.Infinity;
 
             foreach (Collider col in colliders)
             {
-                // Evitar colisionar consigo mismo si el script está en el jugador
-                if (col.gameObject == gameObject || col.transform.IsChildOf(transform))
-                {
-                    continue;
-                }
-
-                IInteractable interactable = col.GetComponentInParent<IInteractable>();
+                IInteractable interactable = col.GetComponent<IInteractable>();
                 if (interactable != null)
                 {
                     // Elegir el objeto interactuable más cercano
