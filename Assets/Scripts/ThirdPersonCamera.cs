@@ -1,118 +1,109 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // Requerido para el nuevo Input System
+using UnityEngine.InputSystem;
 
 public class ThirdPersonCamera : MonoBehaviour
 {
-    [Header("Objetivo a seguir")]
-    [Tooltip("El Transform del personaje que la cámara debe seguir.")]
+    [Header("Objetivo")]
+    [Tooltip("El objeto que la cámara debe seguir (el jugador).")]
     public Transform target;
+    [Tooltip("Desplazamiento para no apuntar a los pies. Usualmente apunta a los hombros/cabeza.")]
+    public Vector3 targetOffset = new Vector3(0, 1.5f, 0);
 
-    [Header("Ajustes de Distancia y Altura")]
-    [Tooltip("Distancia inicial detrás del objetivo.")]
+    [Header("Configuración de Cámara")]
+    [Tooltip("Distancia base de la cámara al jugador.")]
     public float distance = 5.0f;
-    [Tooltip("Desplazamiento de altura respecto al pivote del objetivo.")]
-    public float heightOffset = 1.5f;
-
-    [Header("Límites de Rotación")]
-    [Tooltip("Límite inferior para mirar hacia abajo (grados).")]
-    public float minVerticalAngle = -30f;
-    [Tooltip("Límite superior para mirar hacia arriba (grados).")]
-    public float maxVerticalAngle = 60f;
-
+    [Tooltip("Distancia mínima al chocar con una pared.")]
+    public float minDistance = 1.0f;
+    
     [Header("Sensibilidad")]
-    [Tooltip("Sensibilidad del ratón.")]
-    public float mouseSensitivity = 0.15f;
-    [Tooltip("Sensibilidad del joystick derecho del mando.")]
-    public float controllerSensitivity = 2.0f;
+    public float mouseSensitivity = 1.5f;
+    public float controllerSensitivity = 150.0f;
 
-    [Header("Suavizado y Colisión")]
-    [Tooltip("Tiempo de suavizado para el movimiento de la cámara.")]
-    public float smoothTime = 0.12f;
-    [Tooltip("Habilitar detección de colisiones para evitar que la cámara atraviese paredes.")]
-    public bool enableCollision = true;
-    [Tooltip("Capa (LayerMask) de los objetos con los que la cámara puede colisionar.")]
+    [Header("Límites de Inclinación (Eje Y)")]
+    public float yMinLimit = -20f;
+    public float yMaxLimit = 60f;
+
+    [Header("Colisiones (Evitar atravesar paredes)")]
+    [Tooltip("Capas que bloquearán la visión de la cámara (ej. Default, Paredes).")]
     public LayerMask collisionMask;
+    public float collisionCushion = 0.2f;
 
-    private float rotationX = 0.0f; // Rotación vertical
-    private float rotationY = 0.0f; // Rotación horizontal
-
-    private Vector3 currentVelocity;
-    private Vector3 destinationPosition;
+    private float currentX = 0.0f;
+    private float currentY = 0.0f;
+    private float currentDistance;
 
     void Start()
     {
-        // Bloquear y ocultar el cursor del ratón en el juego
+        // Ocultar y bloquear el cursor para el control de la cámara
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Inicializar las rotaciones con la rotación inicial de la cámara
+        currentDistance = distance;
+
         Vector3 angles = transform.eulerAngles;
-        rotationY = angles.y;
-        rotationX = angles.x;
+        currentX = angles.y;
+        currentY = angles.x;
     }
 
     void LateUpdate()
     {
         if (target == null) return;
 
-        // --- LEER ENTRADA DE ROTACIÓN ---
-        float lookX = 0f;
-        float lookY = 0f;
+        // Si el cursor no está bloqueado (por ejemplo, estamos en el menú de diálogo del NPC), no mover la cámara
+        if (Cursor.lockState != CursorLockMode.Locked) return;
 
-        // Ratón
+        float mouseX = 0f;
+        float mouseY = 0f;
+
+        // 1. Leer movimiento del ratón
         if (Mouse.current != null)
         {
-            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-            lookX = mouseDelta.x * mouseSensitivity;
-            lookY = mouseDelta.y * mouseSensitivity;
+            Vector2 delta = Mouse.current.delta.ReadValue();
+            mouseX += delta.x * mouseSensitivity * 0.1f;
+            mouseY -= delta.y * mouseSensitivity * 0.1f;
         }
 
-        // Mando (stick derecho)
+        // 2. Leer movimiento del mando (Stick Derecho)
         if (Gamepad.current != null)
         {
-            Vector2 stickInput = Gamepad.current.rightStick.ReadValue();
-            lookX += stickInput.x * controllerSensitivity;
-            lookY += stickInput.y * controllerSensitivity;
+            Vector2 stick = Gamepad.current.rightStick.ReadValue();
+            mouseX += stick.x * controllerSensitivity * Time.deltaTime;
+            mouseY -= stick.y * controllerSensitivity * Time.deltaTime;
         }
 
-        // Acumular rotaciones
-        rotationY += lookX;
-        rotationX -= lookY;
+        currentX += mouseX;
+        currentY += mouseY;
 
-        // Limitar la rotación vertical para no girar de cabeza
-        rotationX = Mathf.Clamp(rotationX, minVerticalAngle, maxVerticalAngle);
+        // Limitar la rotación vertical para que no dé la vuelta completa
+        currentY = Mathf.Clamp(currentY, yMinLimit, yMaxLimit);
 
-        // --- CALCULAR POSICIÓN Y ROTACIÓN ---
-        Quaternion rotation = Quaternion.Euler(rotationX, rotationY, 0);
-        Vector3 targetPivotPosition = target.position + Vector3.up * heightOffset;
+        // Calcular la rotación deseada
+        Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
+
+        // Posición del objetivo con su offset (hombros/cabeza)
+        Vector3 targetPosition = target.position + targetOffset;
+
+        // Dirección desde el objetivo hacia la cámara
+        Vector3 direction = rotation * new Vector3(0, 0, -distance);
         
-        float currentDistance = distance;
-
-        // Detección de colisiones opcional (para evitar atravesar paredes)
-        if (enableCollision)
+        // --- Manejo de Colisiones de la Cámara ---
+        float desiredDistance = distance;
+        RaycastHit hit;
+        
+        // Lanzamos una esfera desde el target hacia la cámara para detectar paredes
+        if (Physics.SphereCast(targetPosition, collisionCushion, direction.normalized, out hit, distance, collisionMask))
         {
-            Vector3 idealPosition = targetPivotPosition - (rotation * Vector3.forward * distance);
-            Vector3 directionToCamera = idealPosition - targetPivotPosition;
-            RaycastHit hit;
-
-            // Lanzar un rayo desde el jugador hacia la cámara
-            if (Physics.Raycast(targetPivotPosition, directionToCamera.normalized, out hit, distance, collisionMask))
-            {
-                // Si choca con algo que no sea el jugador, acortar la distancia
-                if (hit.transform != target)
-                {
-                    currentDistance = Mathf.Clamp(hit.distance - 0.2f, 0.5f, distance);
-                }
-            }
+            desiredDistance = Mathf.Clamp(hit.distance, minDistance, distance);
         }
 
-        // Calcular posición final
-        destinationPosition = targetPivotPosition - (rotation * Vector3.forward * currentDistance);
+        // Suavizamos el cambio de distancia para que no salte de golpe al rozar paredes
+        currentDistance = Mathf.Lerp(currentDistance, desiredDistance, Time.deltaTime * 10f);
 
-        // Aplicar la rotación a la cámara
+        // Calcular la posición final
+        Vector3 position = targetPosition + rotation * new Vector3(0, 0, -currentDistance);
+
+        // Aplicar la transformación a la cámara
+        transform.position = position;
         transform.rotation = rotation;
-
-        // Desplazar suavemente a la cámara a la posición de destino
-        transform.position = Vector3.SmoothDamp(transform.position, destinationPosition, ref currentVelocity, smoothTime);
     }
 }

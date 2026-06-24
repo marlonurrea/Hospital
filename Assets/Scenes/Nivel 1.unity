@@ -531,17 +531,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1028009975}
+  targetOffset: {x: 0, y: 1.5, z: 0}
   distance: 5
-  heightOffset: 1.5
-  minVerticalAngle: -30
-  maxVerticalAngle: 60
-  mouseSensitivity: 0.15
+  minDistance: 1
+  mouseSensitivity: 1.01
   controllerSensitivity: 2
-  smoothTime: 0.12
-  enableCollision: 1
+  yMinLimit: -20
+  yMaxLimit: 60
   collisionMask:
     serializedVersion: 2
     m_Bits: 0
+  collisionCushion: 0.2
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -984,6 +984,7 @@ GameObject:
   - component: {fileID: 611922321}
   - component: {fileID: 611922320}
   - component: {fileID: 611922319}
+  - component: {fileID: 611922322}
   m_Layer: 0
   m_Name: Npc Civil
   m_TagString: Untagged
@@ -1082,6 +1083,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 611922317}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &611922322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611922317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fe50dd60919a39468188a413479242a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  promptText: Presiona E para hablar con el Guardia
+  npcDialogosCanvas: {fileID: 0}
+  botonContinuar: {fileID: 0}
 --- !u!1 &619422499
 GameObject:
   m_ObjectHideFlags: 0
@@ -3164,6 +3180,7 @@ GameObject:
   - component: {fileID: 1333120304}
   - component: {fileID: 1333120303}
   - component: {fileID: 1333120302}
+  - component: {fileID: 1333120305}
   m_Layer: 0
   m_Name: Npc Guardia
   m_TagString: Untagged
@@ -3263,6 +3280,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1333120300}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1333120305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333120300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fe50dd60919a39468188a413479242a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  promptText: Presiona E para hablar con el Guardia
+  npcDialogosCanvas: {fileID: 666906870}
+  botonContinuar: {fileID: 874141858}
 --- !u!1 &1345382663
 GameObject:
   m_ObjectHideFlags: 0
