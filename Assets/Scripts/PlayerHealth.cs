@@ -34,6 +34,16 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private bool enableTestDamageKey = true;
 
     private float currentHealthTimer;
+    private bool isPaused = false; // Estado de pausa del temporizador
+
+    /// <summary>
+    /// Pausa o reanuda la cuenta atrás de la vida.
+    /// </summary>
+    public void SetPaused(bool paused)
+    {
+        isPaused = paused;
+        Debug.Log($"[PlayerHealth] Temporizador pausado: {paused}");
+    }
 
     private void Awake()
     {
@@ -99,8 +109,8 @@ public class PlayerHealth : MonoBehaviour
     {
         if (useAsTimer)
         {
-            // Detener el temporizador si el nivel ya se completó
-            if (LevelComplete.Instance != null && LevelComplete.Instance.IsLevelCompleted())
+            // Detener el temporizador si está en pausa o si el nivel ya se completó
+            if (isPaused || (LevelComplete.Instance != null && LevelComplete.Instance.IsLevelCompleted()))
             {
                 return;
             }

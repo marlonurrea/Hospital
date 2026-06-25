@@ -61,6 +61,19 @@ public class NPCInteraction : MonoBehaviour, IInteractable
             
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            // 1. Pausar la cuenta atrás de la barra de salud (temporizador)
+            if (PlayerHealth.Instance != null)
+            {
+                PlayerHealth.Instance.SetPaused(true);
+            }
+
+            // 2. Desactivar el script de movimiento para dejar al jugador estático
+            PlayerMovement pm = FindFirstObjectByType<PlayerMovement>();
+            if (pm != null)
+            {
+                pm.enabled = false;
+            }
         }
         else
         {
@@ -76,6 +89,19 @@ public class NPCInteraction : MonoBehaviour, IInteractable
             
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            // 1. Reanudar la cuenta atrás de la barra de salud
+            if (PlayerHealth.Instance != null)
+            {
+                PlayerHealth.Instance.SetPaused(false);
+            }
+
+            // 2. Reactivar el script de movimiento para que el jugador se mueva
+            PlayerMovement pm = FindFirstObjectByType<PlayerMovement>();
+            if (pm != null)
+            {
+                pm.enabled = true;
+            }
 
             if (GameProgress.Instance != null)
             {
