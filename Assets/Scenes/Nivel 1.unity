@@ -746,6 +746,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
+  npcId: 
   npcDialogosCanvas: {fileID: 1354844841}
   botonContinuar: {fileID: 958148011}
 --- !u!1 &299846109
@@ -894,6 +895,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 304770127}
+  - component: {fileID: 304770128}
   m_Layer: 0
   m_Name: Hud Progreso
   m_TagString: Untagged
@@ -918,6 +920,38 @@ Transform:
   - {fileID: 408813986}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &304770128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 304770126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d0acfc2ab9aa549b15e2323964a5f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  progressData:
+    currentSceneName: Hospital_Lobby
+    playerHealth: 100
+    playerMaxHealth: 100
+    completedTasks: []
+    keycardsObtained: []
+    currentObjectiveIndex: 0
+    hasSavedPosition: 0
+    playerPosX: 0
+    playerPosY: 0
+    playerPosZ: 0
+    reached25: 0
+    reached50: 0
+    reached75: 0
+    reached100: 0
+  totalMainTasks: 3
+  reiniciarAlIniciar: 1
+  progressTextObject: {fileID: 792484582}
+  progressBarObject: {fileID: 662591515}
+  saveKey: HospitalGameProgress
 --- !u!1 &318446647
 GameObject:
   m_ObjectHideFlags: 0
@@ -1876,6 +1910,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
+  npcId: 
   npcDialogosCanvas: {fileID: 2035004422}
   botonContinuar: {fileID: 1789542102}
 --- !u!1 &619422499
@@ -5059,6 +5094,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
+  npcId: 
   npcDialogosCanvas: {fileID: 666906870}
   botonContinuar: {fileID: 874141858}
 --- !u!1 &1345382663
@@ -5991,7 +6027,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: -922, y: 443}
-  m_SizeDelta: {x: 10, y: 100}
+  m_SizeDelta: {x: 200, y: 100}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1727467673
 MonoBehaviour:
@@ -6014,7 +6050,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 0

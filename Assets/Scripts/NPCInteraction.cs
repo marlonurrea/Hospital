@@ -7,6 +7,9 @@ public class NPCInteraction : MonoBehaviour, IInteractable
     [Tooltip("El mensaje que aparecerá al acercarse al NPC.")]
     public string promptText = "Presiona E para hablar con el Guardia";
 
+    [Tooltip("ID único para registrar esta conversación en el progreso (si queda vacío se usará el nombre del objeto).")]
+    public string npcId;
+
     [Header("Referencias de UI")]
     [Tooltip("El objeto/Canvas que contiene los diálogos del NPC.")]
     public GameObject npcDialogosCanvas;
@@ -16,6 +19,11 @@ public class NPCInteraction : MonoBehaviour, IInteractable
 
     private void Start()
     {
+        if (string.IsNullOrEmpty(npcId))
+        {
+            npcId = gameObject.name;
+        }
+
         // Asegurarse de que el diálogo esté cerrado al inicio
         if (npcDialogosCanvas != null)
         {
@@ -51,8 +59,6 @@ public class NPCInteraction : MonoBehaviour, IInteractable
         {
             npcDialogosCanvas.SetActive(true);
             
-            // Opcional: Aquí podrías añadir lógica para bloquear el movimiento del jugador,
-            // mostrar el cursor, o cambiar al mapa de inputs de la interfaz (UI).
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
@@ -68,15 +74,18 @@ public class NPCInteraction : MonoBehaviour, IInteractable
         {
             npcDialogosCanvas.SetActive(false);
             
-            // Opcional: Aquí podrías restaurar el estado del cursor y devolver el control al jugador.
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            if (GameProgress.Instance != null)
+            {
+                GameProgress.Instance.CompleteTask(npcId);
+            }
         }
     }
 
     private void OnDestroy()
     {
-        // Es buena práctica remover los listeners para evitar memory leaks si el objeto se destruye
         if (botonContinuar != null)
         {
             botonContinuar.onClick.RemoveListener(CerrarDialogo);
