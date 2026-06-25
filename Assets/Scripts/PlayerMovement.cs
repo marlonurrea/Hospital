@@ -37,6 +37,10 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
+        // Forzar a false para desactivar correr y saltar por completo
+        canSprint = false;
+        canJump = false;
+
         // Obtener la referencia al CharacterController
         controller = GetComponent<CharacterController>();
 

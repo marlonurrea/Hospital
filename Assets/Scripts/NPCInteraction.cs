@@ -28,6 +28,18 @@ public class NPCInteraction : MonoBehaviour, IInteractable
         if (npcDialogosCanvas != null)
         {
             npcDialogosCanvas.SetActive(false);
+
+            // Si el botón no está asignado o pertenece a otro Canvas (error común en el Inspector),
+            // intentar buscar el botón correcto dentro de los hijos de nuestro propio canvas.
+            if (botonContinuar == null || !botonContinuar.transform.IsChildOf(npcDialogosCanvas.transform))
+            {
+                Button foundBtn = npcDialogosCanvas.GetComponentInChildren<Button>(true);
+                if (foundBtn != null)
+                {
+                    botonContinuar = foundBtn;
+                    Debug.Log($"[NPCInteraction] Asignado botón continuar de '{gameObject.name}' dinámicamente desde sus hijos.");
+                }
+            }
         }
 
         // Configurar el listener del botón para que cierre el diálogo al presionarlo
@@ -37,7 +49,7 @@ public class NPCInteraction : MonoBehaviour, IInteractable
         }
         else
         {
-            Debug.LogWarning("NPCInteraction: No se ha asignado el botón de continuar.");
+            Debug.LogWarning($"NPCInteraction: No se ha asignado el botón de continuar para '{gameObject.name}'.");
         }
     }
 
@@ -83,7 +95,8 @@ public class NPCInteraction : MonoBehaviour, IInteractable
 
     public void CerrarDialogo()
     {
-        if (npcDialogosCanvas != null)
+        // Doble seguridad: solo procesar el cierre y completar progreso si el canvas de este diálogo está realmente abierto
+        if (npcDialogosCanvas != null && npcDialogosCanvas.activeSelf)
         {
             npcDialogosCanvas.SetActive(false);
             
