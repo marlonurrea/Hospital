@@ -18,6 +18,13 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Fuerza de la gravedad aplicada al personaje.")]
     public float gravity = -9.81f;
 
+    [Header("Habilidades")]
+    [Tooltip("Permite al jugador correr.")]
+    [SerializeField] private bool canSprint = false;
+
+    [Tooltip("Permite al jugador saltar.")]
+    [SerializeField] private bool canJump = false;
+
     [Header("Cámara y Orientación")]
     [Tooltip("Referencia a la cámara principal. Si se deja vacío, se asignará Camera.main automáticamente.")]
     public Transform cameraTransform;
@@ -69,10 +76,16 @@ public class PlayerMovement : MonoBehaviour
             if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) verticalInput -= 1f;
 
             // Correr (Shift Izquierdo o Derecho)
-            isSprinting = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+            if (canSprint)
+            {
+                isSprinting = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+            }
 
             // Saltar (Barra Espaciadora)
-            jumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
+            if (canJump)
+            {
+                jumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
+            }
         }
 
         // 2. Leer mando/gamepad (si está disponible)
@@ -87,10 +100,10 @@ public class PlayerMovement : MonoBehaviour
             verticalInput = Mathf.Clamp(verticalInput, -1f, 1f);
 
             // Correr con el stick izquierdo (L3 / Left Stick Button)
-            if (Gamepad.current.leftStickButton.isPressed) isSprinting = true;
+            if (canSprint && Gamepad.current.leftStickButton.isPressed) isSprinting = true;
 
             // Saltar con el botón sur (A en Xbox / Cruz en PlayStation)
-            if (Gamepad.current.buttonSouth.wasPressedThisFrame) jumpPressed = true;
+            if (canJump && Gamepad.current.buttonSouth.wasPressedThisFrame) jumpPressed = true;
         }
 
         // Calcular la dirección del movimiento en relación con la orientación de la cámara
