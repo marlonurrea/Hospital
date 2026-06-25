@@ -5044,7 +5044,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 869257125}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 138065964}
+        m_TargetAssemblyTypeName: LevelComplete, Assembly-CSharp
+        m_MethodName: LoadMainMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &869257125
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6077,6 +6089,7 @@ GameObject:
   - component: {fileID: 1028009977}
   - component: {fileID: 1028009976}
   - component: {fileID: 1028009978}
+  - component: {fileID: 1028009979}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -6237,6 +6250,25 @@ MonoBehaviour:
     m_Bits: 1
   sphereRadius: 2
   cameraTransform: {fileID: 0}
+--- !u!114 &1028009979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1028009971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d391590868e797540b7d97a113b998c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healthSlider: {fileID: 0}
+  healthImageFill: {fileID: 1494676979}
+  healthText: {fileID: 0}
+  useAsTimer: 1
+  levelDuration: 59
+  gameOverSceneName: Fin del Juego
+  enableTestDamageKey: 1
 --- !u!1 &1098497825
 GameObject:
   m_ObjectHideFlags: 0

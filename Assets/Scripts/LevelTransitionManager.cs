@@ -87,6 +87,30 @@ public class LevelTransitionManager : MonoBehaviour
         // 4. Cargar la escena de manera asíncrona en segundo plano
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         
+        if (asyncLoad == null)
+        {
+            Debug.LogError($"[LevelTransitionManager] No se pudo cargar la escena '{sceneName}'. Asegúrate de que el nombre sea correcto y que la escena esté agregada en File > Build Settings.");
+            
+            // Fundido a transparente (Fade Out) para recuperar la pantalla
+            timer = 0f;
+            while (timer < fadeDuration)
+            {
+                timer += Time.deltaTime;
+                if (fadeCanvasGroup != null)
+                {
+                    fadeCanvasGroup.alpha = Mathf.Lerp(1f, 0f, timer / fadeDuration);
+                }
+                yield return null;
+            }
+            if (fadeCanvasGroup != null)
+            {
+                fadeCanvasGroup.alpha = 0f;
+                fadeCanvasGroup.blocksRaycasts = false;
+            }
+            isTransitioning = false;
+            yield break;
+        }
+
         // Esperar hasta que termine de cargar
         while (!asyncLoad.isDone)
         {

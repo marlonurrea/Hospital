@@ -36,7 +36,7 @@ public class LevelComplete : MonoBehaviour
     [SerializeField] private string nextSceneName = "Hospital_Level2";
 
     [Tooltip("Nombre de la escena del menú principal.")]
-    [SerializeField] private string mainMenuSceneName = "MainMenu";
+    [SerializeField] private string mainMenuSceneName = "MenuPrincipal";
 
     [Header("Efectos y Audio")]
     [Tooltip("Sonido de victoria que se reproduce al completar el nivel.")]
@@ -110,6 +110,14 @@ public class LevelComplete : MonoBehaviour
     }
 
     /// <summary>
+    /// Devuelve si el nivel ya ha sido completado.
+    /// </summary>
+    public bool IsLevelCompleted()
+    {
+        return isLevelCompleted;
+    }
+
+    /// <summary>
     /// Dispara los eventos de nivel completado: muestra el panel de UI, calcula las
     /// estadísticas, bloquea el movimiento del jugador, y desbloquea el cursor del mouse.
     /// </summary>
@@ -132,7 +140,7 @@ public class LevelComplete : MonoBehaviour
         Cursor.visible = true;
 
         // 3. Desactivar el control de movimiento del jugador
-        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+        PlayerMovement playerMovement = FindFirstObjectByType<PlayerMovement>();
         if (playerMovement != null)
         {
             playerMovement.enabled = false;
@@ -232,6 +240,12 @@ public class LevelComplete : MonoBehaviour
         if (GameProgress.Instance != null)
         {
             GameProgress.Instance.ResetLevelProgressOnly();
+            
+            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth;
+            if (maxHealth <= 0) maxHealth = 100;
+            
+            GameProgress.Instance.progressData.playerHealth = maxHealth;
+            GameProgress.Instance.SaveProgress();
         }
 
         string currentScene = SceneManager.GetActiveScene().name;
