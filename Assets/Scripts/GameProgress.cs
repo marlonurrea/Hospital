@@ -204,6 +204,23 @@ public class GameProgress : MonoBehaviour
         Debug.Log("[GameProgress] Progreso restablecido y eliminado de la memoria persistente.");
     }
 
+    /// <summary>
+    /// Limpia el progreso específico del nivel (tareas completadas e hitos)
+    /// sin borrar los datos del jugador persistentes (salud, llaves obtenidas, etc.).
+    /// </summary>
+    public void ResetLevelProgressOnly()
+    {
+        progressData.completedTasks.Clear();
+        progressData.reached25 = false;
+        progressData.reached50 = false;
+        progressData.reached75 = false;
+        progressData.reached100 = false;
+
+        ActualizarUI(0f);
+        SaveProgress();
+        Debug.Log("[GameProgress] Se limpiaron las tareas y los hitos del nivel actual.");
+    }
+
     #region Métodos de Utilidad / Atajos
 
     /// <summary>
