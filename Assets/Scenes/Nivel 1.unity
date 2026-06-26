@@ -1160,6 +1160,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
   npcId: 
+  npcName: 
+  npcDialogue: Aqui pagas Chamito
+  esNPCFacturacion: 0
+  mensajeTareasPendientes: "A\xFAn no puedes facturar tu cita. Primero debes hablar
+    con el Guardia, el Enfermero y el Civil."
   npcDialogosCanvas: {fileID: 2129917982}
   botonContinuar: {fileID: 958148011}
 --- !u!136 &198146590
@@ -1252,6 +1257,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
   npcId: 
+  npcName: 
+  npcDialogue: 
+  esNPCFacturacion: 0
+  mensajeTareasPendientes: "A\xFAn no puedes facturar tu cita. Primero debes hablar
+    con el Guardia, el Enfermero y el Civil."
   npcDialogosCanvas: {fileID: 0}
   botonContinuar: {fileID: 0}
 --- !u!1 &200007279
@@ -1597,6 +1607,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
   npcId: 
+  npcName: 
+  npcDialogue: 
+  esNPCFacturacion: 0
+  mensajeTareasPendientes: "A\xFAn no puedes facturar tu cita. Primero debes hablar
+    con el Guardia, el Enfermero y el Civil."
   npcDialogosCanvas: {fileID: 1354844841}
   botonContinuar: {fileID: 958148011}
 --- !u!1 &299846109
@@ -3359,6 +3374,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
   npcId: 
+  npcName: 
+  npcDialogue: hola
+  esNPCFacturacion: 0
+  mensajeTareasPendientes: "A\xFAn no puedes facturar tu cita. Primero debes hablar
+    con el Guardia, el Enfermero y el Civil."
   npcDialogosCanvas: {fileID: 2035004422}
   botonContinuar: {fileID: 1789542102}
 --- !u!4 &621275981 stripped
@@ -7835,6 +7855,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   promptText: Presiona E para hablar con el Guardia
   npcId: 
+  npcName: 
+  npcDialogue: 
+  esNPCFacturacion: 0
+  mensajeTareasPendientes: "A\xFAn no puedes facturar tu cita. Primero debes hablar
+    con el Guardia, el Enfermero y el Civil."
   npcDialogosCanvas: {fileID: 666906870}
   botonContinuar: {fileID: 874141858}
 --- !u!1 &1345382663

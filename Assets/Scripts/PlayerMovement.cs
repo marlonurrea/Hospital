@@ -37,7 +37,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
-        // Forzar a false para desactivar correr y saltar por completo
+        // Forzar a false para desactivar correr y saltar por completo (según requerimiento de diseño)
         canSprint = false;
         canJump = false;
 
@@ -96,8 +96,12 @@ public class PlayerMovement : MonoBehaviour
         if (Gamepad.current != null)
         {
             Vector2 stickInput = Gamepad.current.leftStick.ReadValue();
-            horizontalInput += stickInput.x;
-            verticalInput += stickInput.y;
+            // Aplicar zona muerta (deadzone) para evitar drift
+            if (stickInput.sqrMagnitude > 0.02f)
+            {
+                horizontalInput += stickInput.x;
+                verticalInput += stickInput.y;
+            }
 
             // Limitar la entrada combinada de teclado + mando
             horizontalInput = Mathf.Clamp(horizontalInput, -1f, 1f);
@@ -108,6 +112,14 @@ public class PlayerMovement : MonoBehaviour
 
             // Saltar con el botón sur (A en Xbox / Cruz en PlayStation)
             if (canJump && Gamepad.current.buttonSouth.wasPressedThisFrame) jumpPressed = true;
+        }
+
+        // Normalizar entrada direccional combinada para evitar que el movimiento diagonal sea más rápido
+        float inputLength = Mathf.Sqrt(horizontalInput * horizontalInput + verticalInput * verticalInput);
+        if (inputLength > 1f)
+        {
+            horizontalInput /= inputLength;
+            verticalInput /= inputLength;
         }
 
         // Calcular la dirección del movimiento en relación con la orientación de la cámara
@@ -141,11 +153,8 @@ public class PlayerMovement : MonoBehaviour
         // Determinar la velocidad actual (Correr o caminar)
         float speed = isSprinting ? runSpeed : walkSpeed;
 
-        // Mover al personaje en el plano horizontal
-        controller.Move(moveDirection * speed * Time.deltaTime);
-
-        // Controlar el salto
-        if (jumpPressed && isGrounded)
+        // Controlar el salto (si está habilitado y en el suelo)
+        if (jumpPressed && isGrounded && canJump)
         {
             // Fórmula física para calcular la velocidad necesaria para alcanzar la altura deseada: v = sqrt(h * -2 * g)
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -154,8 +163,11 @@ public class PlayerMovement : MonoBehaviour
         // Aplicar la gravedad acumulada a la velocidad vertical
         velocity.y += gravity * Time.deltaTime;
 
-        // Aplicar el movimiento vertical (gravedad y salto)
-        controller.Move(velocity * Time.deltaTime);
+        // Combinar movimiento horizontal y velocidad vertical en un único vector de velocidad
+        Vector3 movement = moveDirection * speed + Vector3.up * velocity.y;
+
+        // Mover al personaje usando una única llamada a controller.Move para evitar vibración de colisiones (stutter/jitter)
+        controller.Move(movement * Time.deltaTime);
     }
 }
 
