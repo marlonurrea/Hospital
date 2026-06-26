@@ -355,6 +355,42 @@ public class GameProgress : MonoBehaviour
     }
 
     /// <summary>
+    /// Comprueba si se ha completado la tarea del Guardia.
+    /// </summary>
+    public bool IsGuardiaCompleted()
+    {
+        foreach (string task in progressData.completedTasks)
+        {
+            if (task.ToLower().Contains("guardia")) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Comprueba si se ha completado la tarea del Civil.
+    /// </summary>
+    public bool IsCivilCompleted()
+    {
+        foreach (string task in progressData.completedTasks)
+        {
+            if (task.ToLower().Contains("civil")) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Comprueba si se ha completado la tarea del Enfermero.
+    /// </summary>
+    public bool IsEnfermeroCompleted()
+    {
+        foreach (string task in progressData.completedTasks)
+        {
+            if (task.ToLower().Contains("enfermero")) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Añade una tarjeta de acceso al inventario del jugador.
     /// </summary>
     public void AddKeycard(string keycardId)
