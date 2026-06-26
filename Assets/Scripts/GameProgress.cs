@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Contenedor serializable para todos los datos del progreso del juego.
@@ -85,8 +86,31 @@ public class GameProgress : MonoBehaviour
         }
         else
         {
+            // Ojo: si la nueva escena tiene a reiniciarAlIniciar = true, 
+            // resetear progreso de la instancia persistente antes de autodestruirse.
+            if (reiniciarAlIniciar)
+            {
+                Instance.ResetProgress();
+            }
             Destroy(gameObject);
         }
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Forzar a buscar y actualizar las referencias de la UI en la nueva escena
+        DetectUIComponents();
+        ActualizarUI(GetProgressPercentage());
     }
 
     private void Start()
@@ -96,11 +120,48 @@ public class GameProgress : MonoBehaviour
     }
 
     /// <summary>
-    /// Intenta buscar y asignar automáticamente los componentes de UI en los hijos si no están asignados o están incorrectos.
+    /// Intenta buscar y asignar automáticamente los componentes de UI en la escena o en los hijos.
     /// </summary>
     private void DetectUIComponents()
     {
-        // Buscar el texto si no está asignado o no tiene un componente de texto válido
+        // 1. Si la referencia actual es nula o fue destruida (objeto de escena antigua)
+        if (progressTextObject == null)
+        {
+            // Intentar buscar en la escena por nombre exacto o aproximado
+            progressTextObject = GameObject.Find("Porcentaje");
+            if (progressTextObject == null)
+            {
+                // Buscar en toda la escena de forma insensible a mayúsculas
+                foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
+                {
+                    if (go.hideFlags == HideFlags.None && 
+                        (go.name.ToLower().Contains("porcentaje") || go.name.ToLower().Contains("progreso")))
+                    {
+                        progressTextObject = go;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (progressBarObject == null)
+        {
+            progressBarObject = GameObject.Find("Barra de progreso");
+            if (progressBarObject == null)
+            {
+                foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
+                {
+                    if (go.hideFlags == HideFlags.None && 
+                        (go.name.ToLower().Contains("barra de progreso") || go.name.ToLower().Contains("progressbar") || go.name.ToLower().Contains("progress bar")))
+                    {
+                        progressBarObject = go;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Si todavía son nulos o no válidos, buscar en los hijos (fallback original del Singleton)
         if (progressTextObject == null || 
             (progressTextObject.GetComponent<TextMeshProUGUI>() == null && 
              progressTextObject.GetComponentInChildren<TextMeshProUGUI>() == null &&
@@ -119,7 +180,6 @@ public class GameProgress : MonoBehaviour
             }
         }
 
-        // Buscar la barra de progreso (Slider o Image tipo Filled) si no está asignada o no es válida
         if (progressBarObject == null ||
             (progressBarObject.GetComponent<Slider>() == null &&
              progressBarObject.GetComponentInChildren<Slider>() == null &&

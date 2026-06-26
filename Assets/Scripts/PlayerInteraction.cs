@@ -75,21 +75,61 @@ public class PlayerInteraction : MonoBehaviour
             Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, interactionDistance, interactableMask))
+            // Intentar detectar con máscara si está definida, de lo contrario sin máscara
+            bool hitSomething = false;
+            if (interactableMask.value != 0)
             {
-                // Intentar obtener el componente que implementa IInteractable
+                hitSomething = Physics.Raycast(ray, out hit, interactionDistance, interactableMask);
+            }
+            else
+            {
+                hitSomething = Physics.Raycast(ray, out hit, interactionDistance);
+            }
+
+            if (hitSomething)
+            {
+                // Intentar obtener el componente IInteractable de forma jerárquica (objeto, padres o hijos)
                 foundInteractable = hit.collider.GetComponent<IInteractable>();
+                if (foundInteractable == null)
+                {
+                    foundInteractable = hit.collider.GetComponentInParent<IInteractable>();
+                }
+                if (foundInteractable == null)
+                {
+                    foundInteractable = hit.collider.GetComponentInChildren<IInteractable>();
+                }
             }
         }
         else if (detectionMethod == DetectionMethod.SphereCheckFromPlayer)
         {
-            // Buscar colisionadores en una esfera alrededor del jugador
-            Collider[] colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask);
+            // Buscar colisionadores en una esfera alrededor del jugador usando la máscara
+            Collider[] colliders = null;
+            if (interactableMask.value != 0)
+            {
+                colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask);
+            }
+
+            // Salvaguarda: Si la máscara es 0 o no se encontró ningún colisionador, hacer una búsqueda general
+            if (colliders == null || colliders.Length == 0)
+            {
+                colliders = Physics.OverlapSphere(transform.position, sphereRadius);
+            }
+
             float closestDistance = Mathf.Infinity;
 
             foreach (Collider col in colliders)
             {
+                // Intentar obtener el componente IInteractable de forma jerárquica (objeto, padres o hijos)
                 IInteractable interactable = col.GetComponent<IInteractable>();
+                if (interactable == null)
+                {
+                    interactable = col.GetComponentInParent<IInteractable>();
+                }
+                if (interactable == null)
+                {
+                    interactable = col.GetComponentInChildren<IInteractable>();
+                }
+
                 if (interactable != null)
                 {
                     // Elegir el objeto interactuable más cercano
