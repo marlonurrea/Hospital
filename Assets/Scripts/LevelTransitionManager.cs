@@ -68,7 +68,7 @@ public class LevelTransitionManager : MonoBehaviour
         float timer = 0f;
         while (timer < fadeDuration)
         {
-            timer += Time.deltaTime;
+            timer += Time.unscaledDeltaTime;
             if (fadeCanvasGroup != null)
             {
                 fadeCanvasGroup.alpha = Mathf.Lerp(0f, 1f, timer / fadeDuration);
@@ -95,7 +95,7 @@ public class LevelTransitionManager : MonoBehaviour
             timer = 0f;
             while (timer < fadeDuration)
             {
-                timer += Time.deltaTime;
+                timer += Time.unscaledDeltaTime;
                 if (fadeCanvasGroup != null)
                 {
                     fadeCanvasGroup.alpha = Mathf.Lerp(1f, 0f, timer / fadeDuration);
@@ -118,13 +118,13 @@ public class LevelTransitionManager : MonoBehaviour
         }
 
         // Pequeña espera de seguridad para evitar tirones iniciales
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSecondsRealtime(0.1f);
 
         // 5. Fundido a transparente (Fade Out)
         timer = 0f;
         while (timer < fadeDuration)
         {
-            timer += Time.deltaTime;
+            timer += Time.unscaledDeltaTime;
             if (fadeCanvasGroup != null)
             {
                 fadeCanvasGroup.alpha = Mathf.Lerp(1f, 0f, timer / fadeDuration);

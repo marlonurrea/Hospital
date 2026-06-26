@@ -212,7 +212,30 @@ public class NPCInteraction : MonoBehaviour, IInteractable
                 // NPC normal
                 if (GameProgress.Instance != null)
                 {
-                    GameProgress.Instance.CompleteTask(npcId);
+                    bool canComplete = true;
+                    string lowerName = gameObject.name.ToLower();
+                    string lowerId = (npcId ?? "").ToLower();
+
+                    bool isCivil = lowerName.Contains("civil") || lowerId.Contains("civil");
+                    bool isEnfermero = lowerName.Contains("enfermero") || lowerId.Contains("enfermero");
+
+                    if (isCivil)
+                    {
+                        canComplete = GameProgress.Instance.IsGuardiaCompleted();
+                    }
+                    else if (isEnfermero)
+                    {
+                        canComplete = GameProgress.Instance.IsCivilCompleted();
+                    }
+
+                    if (canComplete)
+                    {
+                        GameProgress.Instance.CompleteTask(npcId);
+                    }
+                    else
+                    {
+                        Debug.Log($"[NPCInteraction] No se completó la tarea para {npcId} porque no se cumple el orden de interacción requerido (Guardia -> Civil -> Enfermero).");
+                    }
                 }
             }
         }
