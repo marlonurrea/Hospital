@@ -1,62 +1,62 @@
-using UnityEngine;
-using System.Collections.Generic;
-using TMPro;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using UnityEngine; // Librería base
+using System.Collections.Generic; // Permite el uso de Listas (List<T>)
+using TMPro; // Textos mejorados
+using UnityEngine.UI; // UI normal
+using UnityEngine.SceneManagement; // Control de mapas/escenas
 
 /// <summary>
-/// Contenedor serializable para todos los datos del progreso del juego.
+/// Contenedor que agrupa toda la información que necesitamos guardar como archivo de guardado.
 /// </summary>
-[System.Serializable]
-public class GameProgressData
+[System.Serializable] // Permite que Unity convierta estos datos en texto/JSON para guardarlos en el disco duro
+public class GameProgressData // Clase contenedora de datos puros, sin lógica
 {
     [Header("Datos Generales")]
-    public string currentSceneName = "Hospital_Lobby";
-    public int playerHealth = 100;
-    public int playerMaxHealth = 100;
+    public string currentSceneName = "Hospital_Lobby"; // Último mapa en el que estuvo el jugador
+    public int playerHealth = 100; // Vida actual con la que se guardó
+    public int playerMaxHealth = 100; // Capacidad máxima de vida
 
     [Header("Progreso del Juego")]
-    public List<string> completedTasks = new List<string>();
-    public List<string> keycardsObtained = new List<string>();
-    public int currentObjectiveIndex = 0;
+    public List<string> completedTasks = new List<string>(); // Lista de nombres de las tareas ya hechas
+    public List<string> keycardsObtained = new List<string>(); // Lista de llaves o tarjetas recogidas
+    public int currentObjectiveIndex = 0; // Índice de la misión principal actual
 
     [Header("Posición del Jugador")]
-    public bool hasSavedPosition = false;
-    public float playerPosX;
-    public float playerPosY;
-    public float playerPosZ;
+    public bool hasSavedPosition = false; // Bandera para saber si hay punto de control
+    public float playerPosX; // Eje X del mapa
+    public float playerPosY; // Altura Y del mapa
+    public float playerPosZ; // Profundidad Z del mapa
 
     [Header("Hitos de Progreso")]
-    public bool reached25 = false;
-    public bool reached50 = false;
-    public bool reached75 = false;
-    public bool reached100 = false;
+    public bool reached25 = false; // ¿Llegó al 25%?
+    public bool reached50 = false; // ¿Llegó al 50%?
+    public bool reached75 = false; // ¿Llegó al 75%?
+    public bool reached100 = false; // ¿Completó todo?
 }
 
-public class GameProgress : MonoBehaviour
+public class GameProgress : MonoBehaviour // Clase principal que maneja los datos y la interfaz del progreso
 {
-    // Instancia única (Singleton) accesible desde cualquier script
+    // Singleton para que cualquier archivo pueda llamar a 'GameProgress.Instance' globalmente
     public static GameProgress Instance { get; private set; }
 
     [Header("Datos de Progreso")]
-    public GameProgressData progressData = new GameProgressData();
+    public GameProgressData progressData = new GameProgressData(); // Crea un objeto de nuestra clase contenedora de arriba
 
     [Header("Ajustes de Porcentaje")]
     [Tooltip("Cantidad total de misiones principales necesarias para llegar al 100%.")]
-    public int totalMainTasks = 4;
+    public int totalMainTasks = 4; // Por defecto necesitamos 4 misiones principales para el 100% (incluye la recepcionista)
 
     [Header("Herramientas de Prueba")]
-    [Tooltip("Marca esta casilla y dale a Play para borrar la partida guardada y empezar en 0%. luego desmárcala.")]
-    public bool reiniciarAlIniciar = false;
+    [Tooltip("Dale a Play con esto marcado para borrar la partida guardada y empezar de 0.")]
+    public bool reiniciarAlIniciar = false; // Trampa de desarrollador para limpiar las partidas de prueba
 
     [Header("Referencias de UI (HUD)")]
     [Tooltip("El GameObject que tiene el texto de porcentaje (ej: el objeto Porcentaje).")]
-    [SerializeField] private GameObject progressTextObject;
+    [SerializeField] private GameObject progressTextObject; // El texto en la pantalla que dice "X%"
 
     [Tooltip("El GameObject que tiene la barra de progreso (ej: el objeto Barra de progreso).")]
-    [SerializeField] private GameObject progressBarObject;
+    [SerializeField] private GameObject progressBarObject; // La barra que se llena al completar misiones
 
-    // Delegados/Eventos para suscribirse desde otros scripts (UI, lógica de juego, etc.)
+    // Eventos a los que otros scripts pueden suscribirse. Ejemplo: la música de victoria se suscribe a OnProgress100
     public static event System.Action<float> OnProgressChanged;
     public static event System.Action OnProgress25;
     public static event System.Action OnProgress50;
@@ -64,86 +64,71 @@ public class GameProgress : MonoBehaviour
     public static event System.Action OnProgress100;
 
     [Header("Configuración de Guardado")]
-    [Tooltip("Clave con la que se guardará el JSON en los PlayerPrefs.")]
-    [SerializeField] private string saveKey = "HospitalGameProgress";
+    [Tooltip("Clave con la que se guardará el archivo en el sistema.")]
+    [SerializeField] private string saveKey = "HospitalGameProgress"; // El nombre del "Archivo de Guardado"
 
-    private void Awake()
+    private void Awake() // Se ejecuta inmediatamente
     {
-        // Implementación del patrón Singleton
-        if (Instance == null)
+        if (Instance == null) // Si somos el primer Gestor de Progreso
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Instance = this; // Nos coronamos como el principal
+            DontDestroyOnLoad(gameObject); // Evitamos que nos eliminen al cambiar de nivel
             
-            if (reiniciarAlIniciar)
-            {
-                ResetProgress();
-            }
-            else
-            {
-                LoadProgress(); // Cargar progreso guardado automáticamente
-            }
+            if (reiniciarAlIniciar) ResetProgress(); // Si el programador quiere reiniciar de 0, lo hacemos
+            else LoadProgress(); // Si no, cargamos nuestra partida guardada normalmente
         }
-        else
+        else // Si ya existía otro gestor cargado...
         {
-            // Ojo: si la nueva escena tiene a reiniciarAlIniciar = true, 
-            // resetear progreso de la instancia persistente antes de autodestruirse.
-            if (reiniciarAlIniciar)
-            {
-                Instance.ResetProgress();
-            }
-            Destroy(gameObject);
+            if (reiniciarAlIniciar) Instance.ResetProgress(); // Le pasamos la orden al gestor principal de reiniciarse
+            Destroy(gameObject); // Nos autodestruimos para no generar conflictos
         }
     }
 
-    private void OnEnable()
+    private void OnEnable() // Se ejecuta al activar este script
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded; // Avisamos que queremos saber cuando se carga un mapa nuevo
     }
 
-    private void OnDisable()
+    private void OnDisable() // Al desactivarse...
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded -= OnSceneLoaded; // Cancelamos el aviso
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) // Función que corre cada vez que entramos a un nivel
     {
-        // Forzar a buscar y actualizar las referencias de la UI en la nueva escena
-        DetectUIComponents();
-        ActualizarUI(GetProgressPercentage());
+        DetectUIComponents(); // Busca los textos y barras en la nueva pantalla porque los anteriores se destruyeron
+        ActualizarUI(GetProgressPercentage()); // Refresca los números para que sean exactos
     }
 
-    private void Start()
+    private void Start() // Se ejecuta en el primer fotograma
     {
-        DetectUIComponents();
-        ActualizarUI(GetProgressPercentage());
+        DetectUIComponents(); // Detectamos componentes visuales por si acaso
+        ActualizarUI(GetProgressPercentage()); // Refrescamos
     }
 
     /// <summary>
-    /// Intenta buscar y asignar automáticamente los componentes de UI en la escena o en los hijos.
+    /// Busca y asigna los componentes visuales aunque no los hayamos conectado en el Inspector manualmente
     /// </summary>
     private void DetectUIComponents()
     {
-        // 1. Si la referencia actual es nula o fue destruida (objeto de escena antigua)
+        // 1. Si el texto se rompió o está vacío...
         if (progressTextObject == null)
         {
-            // Intentar buscar en la escena por nombre exacto o aproximado
-            progressTextObject = GameObject.Find("Porcentaje");
-            if (progressTextObject == null)
+            progressTextObject = GameObject.Find("Porcentaje"); // Lo buscamos por su nombre exacto
+            if (progressTextObject == null) // Si sigue sin estar
             {
-                // Buscar en toda la escena de forma insensible a mayúsculas
-                foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
+                foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>()) // Revisamos ABSOLUTAMENTE TODOS los objetos ocultos
                 {
-                    if (go.hideFlags == HideFlags.None && 
-                        (go.name.ToLower().Contains("porcentaje") || go.name.ToLower().Contains("progreso")))
+                    if (go.hideFlags == HideFlags.None && (go.name.ToLower().Contains("porcentaje") || go.name.ToLower().Contains("progreso")))
                     {
-                        progressTextObject = go;
+                        progressTextObject = go; // Si algún objeto dice "porcentaje" en su nombre, lo usamos
                         break;
                     }
                 }
             }
         }
 
+        // Hacemos el mismo escaneo intenso, pero buscando la barra visual
         if (progressBarObject == null)
         {
             progressBarObject = GameObject.Find("Barra de progreso");
@@ -151,8 +136,7 @@ public class GameProgress : MonoBehaviour
             {
                 foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
                 {
-                    if (go.hideFlags == HideFlags.None && 
-                        (go.name.ToLower().Contains("barra de progreso") || go.name.ToLower().Contains("progressbar") || go.name.ToLower().Contains("progress bar")))
+                    if (go.hideFlags == HideFlags.None && (go.name.ToLower().Contains("barra de progreso") || go.name.ToLower().Contains("progressbar") || go.name.ToLower().Contains("progress bar")))
                     {
                         progressBarObject = go;
                         break;
@@ -160,340 +144,188 @@ public class GameProgress : MonoBehaviour
                 }
             }
         }
-
-        // 2. Si todavía son nulos o no válidos, buscar en los hijos (fallback original del Singleton)
-        if (progressTextObject == null || 
-            (progressTextObject.GetComponent<TextMeshProUGUI>() == null && 
-             progressTextObject.GetComponentInChildren<TextMeshProUGUI>() == null &&
-             progressTextObject.GetComponent<Text>() == null && 
-             progressTextObject.GetComponentInChildren<Text>() == null))
-        {
-            TextMeshProUGUI tmp = GetComponentInChildren<TextMeshProUGUI>();
-            if (tmp != null) 
-            {
-                progressTextObject = tmp.gameObject;
-            }
-            else
-            {
-                Text txt = GetComponentInChildren<Text>();
-                if (txt != null) progressTextObject = txt.gameObject;
-            }
-        }
-
-        if (progressBarObject == null ||
-            (progressBarObject.GetComponent<Slider>() == null &&
-             progressBarObject.GetComponentInChildren<Slider>() == null &&
-             progressBarObject.GetComponent<Image>() == null &&
-             progressBarObject.GetComponentInChildren<Image>() == null))
-        {
-            Slider slider = GetComponentInChildren<Slider>();
-            if (slider != null) 
-            {
-                progressBarObject = slider.gameObject;
-            }
-            else
-            {
-                // Buscar imágenes de tipo Filled en los hijos (excluyendo el objeto de texto)
-                Image[] images = GetComponentsInChildren<Image>();
-                foreach (Image img in images)
-                {
-                    if (img.type == Image.Type.Filled && img.gameObject != progressTextObject)
-                    {
-                        progressBarObject = img.gameObject;
-                        break;
-                    }
-                }
-            }
-        }
     }
 
     /// <summary>
-    /// Guarda el estado actual de progressData a formato JSON en PlayerPrefs.
+    /// Transforma nuestra clase de datos (GameProgressData) en texto y lo guarda en el disco duro (PlayerPrefs).
     /// </summary>
-    public void SaveProgress()
+    public void SaveProgress() // Función de guardado de partida
     {
-        try
+        try // Intentamos guardar (usamos try por si el disco está lleno o sin permisos)
         {
-            string json = JsonUtility.ToJson(progressData, true);
-            PlayerPrefs.SetString(saveKey, json);
-            PlayerPrefs.Save();
+            string json = JsonUtility.ToJson(progressData, true); // Convierte los datos a un texto JSON
+            PlayerPrefs.SetString(saveKey, json); // Guarda el texto largo en el sistema bajo nuestro nombre de archivo
+            PlayerPrefs.Save(); // Obliga al disco a escribir
             Debug.Log("[GameProgress] Progreso guardado con éxito.");
         }
-        catch (System.Exception e)
+        catch (System.Exception e) // Si falla...
         {
-            Debug.LogError($"[GameProgress] Error al guardar el progreso: {e.Message}");
+            Debug.LogError($"[GameProgress] Error al guardar el progreso: {e.Message}"); // Reportar error
         }
     }
 
     /// <summary>
-    /// Carga el estado del progreso desde PlayerPrefs. Si no existe, inicia datos por defecto.
+    /// Lee el texto de PlayerPrefs y lo convierte de vuelta a nuestra clase GameProgressData.
     /// </summary>
-    public void LoadProgress()
+    public void LoadProgress() // Función de cargar partida
     {
-        if (PlayerPrefs.HasKey(saveKey))
+        if (PlayerPrefs.HasKey(saveKey)) // Si el archivo sí existe...
         {
             try
             {
-                string json = PlayerPrefs.GetString(saveKey);
-                JsonUtility.FromJsonOverwrite(json, progressData);
+                string json = PlayerPrefs.GetString(saveKey); // Extraemos todo el texto
+                JsonUtility.FromJsonOverwrite(json, progressData); // Lo inyectamos en nuestra clase actual
                 Debug.Log("[GameProgress] Progreso cargado con éxito.");
             }
-            catch (System.Exception e)
+            catch (System.Exception e) // Si el archivo está corrupto
             {
-                Debug.LogError($"[GameProgress] Error al cargar el progreso (se usaron datos por defecto): {e.Message}");
-                progressData = new GameProgressData();
+                Debug.LogError($"[GameProgress] Partida corrupta. Iniciando por defecto: {e.Message}");
+                progressData = new GameProgressData(); // Empezamos de cero si se corrompió
             }
         }
-        else
+        else // Si es la primera vez que juegan
         {
-            Debug.Log("[GameProgress] No se encontró partida guardada. Iniciando partida nueva.");
-            progressData = new GameProgressData();
+            Debug.Log("[GameProgress] No se encontró partida. Iniciando nueva.");
+            progressData = new GameProgressData(); // Crea contenedor vacío
         }
-
-        ActualizarUI(GetProgressPercentage());
+        ActualizarUI(GetProgressPercentage()); // Mostramos en pantalla lo que hayamos cargado
     }
 
     /// <summary>
-    /// Borra el progreso guardado en PlayerPrefs y restablece los datos en memoria.
+    /// Borra definitivamente la partida guardada (Hard Reset)
     /// </summary>
     public void ResetProgress()
     {
-        PlayerPrefs.DeleteKey(saveKey);
-        progressData = new GameProgressData();
-        ActualizarUI(0f);
-        Debug.Log("[GameProgress] Progreso restablecido y eliminado de la memoria persistente.");
+        PlayerPrefs.DeleteKey(saveKey); // Elimina el archivo del registro
+        progressData = new GameProgressData(); // Limpia los datos de la memoria RAM
+        ActualizarUI(0f); // Pone la pantalla en 0%
     }
 
     /// <summary>
-    /// Limpia el progreso específico del nivel (tareas completadas e hitos)
-    /// sin borrar los datos del jugador persistentes (salud, llaves obtenidas, etc.).
+    /// Solo borra las misiones del nivel (Soft Reset) útil si pierdes y te reinician el mapa, pero conservas la vida máxima, etc.
     /// </summary>
     public void ResetLevelProgressOnly()
     {
-        progressData.completedTasks.Clear();
-        progressData.reached25 = false;
+        progressData.completedTasks.Clear(); // Vaciamos la lista de tareas
+        progressData.reached25 = false; // Reseteamos hitos
         progressData.reached50 = false;
         progressData.reached75 = false;
         progressData.reached100 = false;
 
         ActualizarUI(0f);
-        SaveProgress();
-        Debug.Log("[GameProgress] Se limpiaron las tareas y los hitos del nivel actual.");
+        SaveProgress(); // Confirmamos el borrado
     }
 
-    #region Métodos de Utilidad / Atajos
+    #region Métodos de Utilidad / Atajos (Lógica de Misiones)
 
     /// <summary>
-    /// Marca una tarea como completada si no lo estaba ya.
+    /// Se llama a esta función (ej: desde un NPC) para marcar una misión como hecha.
     /// </summary>
     public void CompleteTask(string taskId)
     {
-        if (!progressData.completedTasks.Contains(taskId))
+        if (!progressData.completedTasks.Contains(taskId)) // Si no estaba hecha previamente
         {
-            progressData.completedTasks.Add(taskId);
-            Debug.Log($"[GameProgress] Tarea completada: {taskId}");
+            progressData.completedTasks.Add(taskId); // La añadimos a la lista de completadas
             
-            float currentPercent = GetProgressPercentage();
-            Debug.Log($"[GameProgress] Progreso actual del juego: {currentPercent}%");
+            float currentPercent = GetProgressPercentage(); // Recalculamos el porcentaje total
+            
+            OnProgressChanged?.Invoke(currentPercent); // Avisamos a todos los scripts visuales para que se actualicen
+            CheckProgressMilestones(currentPercent); // Revisamos si con esta misión activamos un Hito Especial
+            ActualizarUI(currentPercent); // Refrescamos pantalla
 
-            // Disparar eventos
-            OnProgressChanged?.Invoke(currentPercent);
-            CheckProgressMilestones(currentPercent);
-            ActualizarUI(currentPercent);
-
-            SaveProgress(); // Guardar automáticamente al cambiar estado importante
+            SaveProgress(); // Guardamos automáticamente la partida por precaución
         }
     }
 
     /// <summary>
-    /// Calcula y devuelve el porcentaje actual de progreso.
+    /// Calcula cuántas tareas tenemos divididas entre las totales para sacar el porcentaje base 100.
     /// </summary>
     public float GetProgressPercentage()
     {
-        if (totalMainTasks <= 0) return 0f;
-        float percent = ((float)progressData.completedTasks.Count / totalMainTasks) * 100f;
-        return Mathf.Clamp(percent, 0f, 100f);
+        if (totalMainTasks <= 0) return 0f; // Evitar división por cero
+        float percent = ((float)progressData.completedTasks.Count / totalMainTasks) * 100f; // Regla de tres simple
+        return Mathf.Clamp(percent, 0f, 100f); // Asegurar que nunca se pase del 100%
     }
 
     /// <summary>
-    /// Verifica si se alcanzan los hitos de 25%, 50%, 75% o 100% y dispara sus eventos respectivos.
+    /// Revisa si el jugador ha cruzado marcas clave del porcentaje (25%, 50%, 75%, 100%)
+    /// y avisa a los eventos especiales (por si queremos que suene música, den un logro, etc).
     /// </summary>
     private void CheckProgressMilestones(float percentage)
     {
         if (percentage >= 25f && !progressData.reached25)
         {
-            progressData.reached25 = true;
-            OnProgress25?.Invoke();
-            Debug.Log("[GameProgress] ¡Hito del 25% alcanzado!");
+            progressData.reached25 = true; // Confirmamos que pasamos el hito
+            OnProgress25?.Invoke(); // Disparamos la alerta de "llegamos al 25"
         }
         if (percentage >= 50f && !progressData.reached50)
         {
             progressData.reached50 = true;
             OnProgress50?.Invoke();
-            Debug.Log("[GameProgress] ¡Hito del 50% alcanzado!");
         }
         if (percentage >= 75f && !progressData.reached75)
         {
             progressData.reached75 = true;
             OnProgress75?.Invoke();
-            Debug.Log("[GameProgress] ¡Hito del 75% alcanzado!");
         }
         if (percentage >= 100f && !progressData.reached100)
         {
-            progressData.reached100 = true;
-            OnProgress100?.Invoke();
-            Debug.Log("[GameProgress] ¡Felicidades! ¡Progreso al 100% completado!");
+            progressData.reached100 = true; // Confirmamos que ya hicimos todo
+            OnProgress100?.Invoke(); // Dispara la orden que finaliza el nivel (escuchada por LevelComplete.cs)
         }
     }
 
     /// <summary>
-    /// Comprueba si una tarea ha sido completada.
+    /// Comprueba si una tarea específica está en la lista.
     /// </summary>
-    public bool IsTaskCompleted(string taskId)
-    {
-        return progressData.completedTasks.Contains(taskId);
-    }
+    public bool IsTaskCompleted(string taskId) { return progressData.completedTasks.Contains(taskId); }
+
+    // Misiones específicas hardcodeadas buscando la palabra clave
+    public bool IsGuardiaCompleted() { foreach (string task in progressData.completedTasks) if (task.ToLower().Contains("guardia")) return true; return false; }
+    public bool IsCivilCompleted() { foreach (string task in progressData.completedTasks) if (task.ToLower().Contains("civil")) return true; return false; }
+    public bool IsEnfermeroCompleted() { foreach (string task in progressData.completedTasks) if (task.ToLower().Contains("enfermero")) return true; return false; }
 
     /// <summary>
-    /// Comprueba si se ha completado la tarea del Guardia.
-    /// </summary>
-    public bool IsGuardiaCompleted()
-    {
-        foreach (string task in progressData.completedTasks)
-        {
-            if (task.ToLower().Contains("guardia")) return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Comprueba si se ha completado la tarea del Civil.
-    /// </summary>
-    public bool IsCivilCompleted()
-    {
-        foreach (string task in progressData.completedTasks)
-        {
-            if (task.ToLower().Contains("civil")) return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Comprueba si se ha completado la tarea del Enfermero.
-    /// </summary>
-    public bool IsEnfermeroCompleted()
-    {
-        foreach (string task in progressData.completedTasks)
-        {
-            if (task.ToLower().Contains("enfermero")) return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Añade una tarjeta de acceso al inventario del jugador.
-    /// </summary>
-    public void AddKeycard(string keycardId)
-    {
-        if (!progressData.keycardsObtained.Contains(keycardId))
-        {
-            progressData.keycardsObtained.Add(keycardId);
-            Debug.Log($"[GameProgress] Llave/Tarjeta obtenida: {keycardId}");
-            SaveProgress();
-        }
-    }
-
-    /// <summary>
-    /// Comprueba si el jugador posee una tarjeta de acceso específica.
-    /// </summary>
-    public bool HasKeycard(string keycardId)
-    {
-        return progressData.keycardsObtained.Contains(keycardId);
-    }
-
-    /// <summary>
-    /// Guarda las coordenadas actuales del jugador.
-    /// </summary>
-    public void SavePlayerPosition(Vector3 position)
-    {
-        progressData.playerPosX = position.x;
-        progressData.playerPosY = position.y;
-        progressData.playerPosZ = position.z;
-        progressData.hasSavedPosition = true;
-        Debug.Log($"[GameProgress] Posición del jugador guardada: {position}");
-        SaveProgress();
-    }
-
-    /// <summary>
-    /// Obtiene la posición guardada del jugador. Devuelve Vector3.zero si no hay posición guardada.
-    /// </summary>
-    public Vector3 GetSavedPlayerPosition()
-    {
-        if (progressData.hasSavedPosition)
-        {
-            return new Vector3(progressData.playerPosX, progressData.playerPosY, progressData.playerPosZ);
-        }
-        return Vector3.zero;
-    }
-
-    /// <summary>
-    /// Actualiza los textos y las barras de progreso de la interfaz buscando componentes en los GameObjects asignados.
+    /// Actualiza los textos y las barras de progreso de la interfaz.
     /// </summary>
     public void ActualizarUI(float porcentaje)
     {
-        string textoFormateado = $"Progreso {porcentaje:0}%";
+        string textoFormateado = $"Progreso {porcentaje:0}%"; // Crea el texto, omitiendo decimales
 
-        // 1. Actualizar Texto (TextMeshPro o Legacy Text)
+        // Actualizar el número escrito
         if (progressTextObject != null)
         {
+            // Intentar buscar los TextMeshPro o los Text Antiguos y asignarles el texto
             TextMeshProUGUI textTMP = progressTextObject.GetComponent<TextMeshProUGUI>();
             if (textTMP == null) textTMP = progressTextObject.GetComponentInChildren<TextMeshProUGUI>();
-
-            if (textTMP != null)
-            {
-                textTMP.text = textoFormateado;
-            }
+            if (textTMP != null) textTMP.text = textoFormateado;
             else
             {
                 Text textLegacy = progressTextObject.GetComponent<Text>();
                 if (textLegacy == null) textLegacy = progressTextObject.GetComponentInChildren<Text>();
-
-                if (textLegacy != null)
-                {
-                    textLegacy.text = textoFormateado;
-                }
+                if (textLegacy != null) textLegacy.text = textoFormateado;
             }
         }
 
-        // 2. Actualizar Barra de Progreso (Slider o Imagen con Relleno)
+        // Actualizar el tamaño visual de la barra
         if (progressBarObject != null)
         {
+            // Intentar actualizar un Slider
             Slider slider = progressBarObject.GetComponent<Slider>();
             if (slider == null) slider = progressBarObject.GetComponentInChildren<Slider>();
-
+            
             if (slider != null)
             {
-                if (slider.maxValue > 1f)
-                {
-                    slider.value = (porcentaje / 100f) * slider.maxValue;
-                }
-                else
-                {
-                    slider.value = porcentaje / 100f;
-                }
+                slider.value = (porcentaje / 100f) * slider.maxValue; // Lo ajusta al máximo permitido
             }
             else
             {
+                // Si no hay slider, intentamos rellenar una Imagen estilo 'Filled'
                 Image image = progressBarObject.GetComponent<Image>();
                 if (image == null) image = progressBarObject.GetComponentInChildren<Image>();
-
-                if (image != null)
-                {
-                    image.fillAmount = porcentaje / 100f;
-                }
+                if (image != null) image.fillAmount = porcentaje / 100f; // Asigna un valor de 0 a 1
             }
         }
     }
-
     #endregion
 }

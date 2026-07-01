@@ -1,67 +1,68 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine; // Herramientas básicas de Unity
+using UnityEngine.SceneManagement; // Permite cargar diferentes niveles (escenas)
 
-public class MainMenu : MonoBehaviour
+public class MainMenu : MonoBehaviour // Clase para controlar la pantalla principal del juego
 {
-    [Header("UI Panels")]
-    [Tooltip("Panel que contiene las instrucciones del juego (opcional).")]
-    [SerializeField] private GameObject instructionsPanel;
+    [Header("Paneles de la UI")] // Sección en el Inspector para la interfaz
+    [Tooltip("Panel que contiene las instrucciones del juego (opcional).")] // Texto guía en Unity
+    [SerializeField] private GameObject instructionsPanel; // Variable para arrastrar el panel de instrucciones
 
-    [Header("Configuración de Nivel")]
-    [Tooltip("Nombre exacto de la escena del primer nivel.")]
-    [SerializeField] private string firstLevelSceneName = "Nivel 1";
+    [Header("Configuración de Nivel")] // Sección para los niveles
+    [Tooltip("Nombre exacto de la escena del primer nivel.")] // Texto guía en Unity
+    [SerializeField] private string firstLevelSceneName = "Nivel 1"; // Nombre del mapa que cargará al darle "Jugar"
 
     /// <summary>
     /// Inicia el juego cargando el primer nivel (utiliza transición suave si está disponible).
     /// </summary>
-    public void PlayGame()
+    public void PlayGame() // Función que se activa al presionar el botón "Jugar"
     {
-        // Borrar el progreso de PlayerPrefs para empezar una partida nueva limpia
-        PlayerPrefs.DeleteKey("HospitalGameProgress");
-        PlayerPrefs.DeleteKey("HospitalGam");
-        PlayerPrefs.Save();
+        // Borrar el progreso guardado para empezar una partida totalmente nueva
+        PlayerPrefs.DeleteKey("HospitalGameProgress"); // Borramos la clave principal de guardado
+        PlayerPrefs.DeleteKey("HospitalGam"); // Borramos cualquier otra clave residual
+        PlayerPrefs.Save(); // Confirmamos el borrado en el disco duro
 
-        // Restablecer el progreso en memoria si ya existiera una instancia
+        // Si el sistema de progreso del juego ya estaba cargado en memoria...
         if (GameProgress.Instance != null)
         {
-            GameProgress.Instance.ResetProgress();
+            GameProgress.Instance.ResetProgress(); // Lo reseteamos internamente
         }
 
+        // Si tenemos un sistema de transición (pantalla en negro que se aclara)
         if (LevelTransitionManager.Instance != null)
         {
-            LevelTransitionManager.Instance.TransitionToScene(firstLevelSceneName);
+            LevelTransitionManager.Instance.TransitionToScene(firstLevelSceneName); // Usamos transición
         }
-        else
+        else // Si no hay transición
         {
-            SceneManager.LoadScene(firstLevelSceneName);
+            SceneManager.LoadScene(firstLevelSceneName); // Cargamos la escena de golpe
         }
     }
 
     /// <summary>
     /// Muestra u oculta el panel de instrucciones.
     /// </summary>
-    public void ToggleInstructions(bool show)
+    public void ToggleInstructions(bool show) // Función para el botón de "Instrucciones". Recibe un true o false
     {
-        if (instructionsPanel != null)
+        if (instructionsPanel != null) // Nos aseguramos que sí conectaron un panel en el Inspector
         {
-            instructionsPanel.SetActive(show);
+            instructionsPanel.SetActive(show); // Lo mostramos o lo ocultamos según el valor de 'show'
         }
         else
         {
-            Debug.LogWarning("No se ha asignado el panel de instrucciones en el inspector del MainMenu.");
+            Debug.LogWarning("No se asignó el panel de instrucciones en el inspector del MainMenu."); // Aviso de error
         }
     }
 
     /// <summary>
     /// Cierra el juego (funciona en compilación y detiene el playmode en el editor).
     /// </summary>
-    public void QuitGame()
+    public void QuitGame() // Función para el botón "Salir"
     {
-        Debug.Log("Cerrando el juego...");
-        Application.Quit();
+        Debug.Log("Cerrando el juego..."); // Mensaje en la consola
+        Application.Quit(); // Cierra el programa (solo funciona en el juego ya exportado)
 
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
+        #if UNITY_EDITOR // Si estamos dentro del motor de Unity...
+        UnityEditor.EditorApplication.isPlaying = false; // Detenemos la simulación del botón Play
         #endif
     }
 }

@@ -1,57 +1,49 @@
-using UnityEngine;
-using UnityEngine.InputSystem; // Requerido para el nuevo Input System
+using UnityEngine; // Funciones básicas de Unity
+using UnityEngine.InputSystem; // Sistema moderno para detectar controles y teclado
 
-public class ObjectInteractTest : MonoBehaviour
+public class ObjectInteractTest : MonoBehaviour // Clase de prueba para verificar que la interacción funciona
 {
     [Header("Configuración de Interacción")]
     [Tooltip("Distancia máxima a la que debe estar el jugador para interactuar.")]
-    public float interactionDistance = 3.0f;
+    public float interactionDistance = 3.0f; // Qué tan cerca debe estar el jugador
 
     [Tooltip("Mensaje personalizado que se imprimirá en la consola.")]
-    public string customMessage = "¡Has interactuado con este objeto correctamente!";
+    public string customMessage = "¡Has interactuado con este objeto correctamente!"; // Mensaje de éxito
 
-    private Transform playerTransform;
+    private Transform playerTransform; // Variable para recordar dónde está el jugador
 
-    void Start()
+    void Start() // Se ejecuta al principio
     {
-        // Buscar automáticamente al jugador en la escena usando el Tag "Player"
+        // Busca automáticamente al jugador por su etiqueta ("Player")
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            playerTransform = player.transform;
-        }
-        else
-        {
-            Debug.LogWarning("ObjectInteractTest: No se encontró ningún GameObject con la etiqueta (Tag) 'Player'. Asigna la etiqueta 'Player' a tu personaje.");
-        }
+        if (player != null) playerTransform = player.transform; // Si lo encuentra, guarda su ubicación
+        else Debug.LogWarning("[ObjectInteractTest] No se encontró a nadie con el Tag 'Player'."); // Aviso de error
     }
 
-    void Update()
+    void Update() // Se ejecuta cada fotograma
     {
-        if (playerTransform == null)
+        if (playerTransform == null) // Si no encontró al jugador al principio...
         {
-            // Intentar buscar de nuevo si no se encontró en Start (por si el jugador se genera después)
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            GameObject player = GameObject.FindGameObjectWithTag("Player"); // Sigue buscándolo
             if (player != null) playerTransform = player.transform;
-            return;
+            return; // Espera hasta encontrarlo
         }
 
-        // Calcular la distancia entre el objeto y el jugador
+        // Calcula la distancia matemática exacta entre este objeto y el jugador
         float distance = Vector3.Distance(transform.position, playerTransform.position);
 
-        // Si el jugador está lo suficientemente cerca
-        if (distance <= interactionDistance)
+        if (distance <= interactionDistance) // Si estamos lo suficientemente cerca...
         {
-            // Si el jugador presiona la tecla E en el teclado
+            // Y si presionamos la tecla E...
             if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
-                // Imprimir el mensaje en consola incluyendo el nombre del objeto
+                // Mostramos el mensaje de éxito en la consola de programador
                 Debug.Log($"[{gameObject.name}] interactuado: {customMessage}");
             }
         }
     }
 
-    // Dibujar el radio de interacción en el Editor de Unity para verlo visualmente
+    // Dibuja un círculo verde en el editor de Unity para visualizar el rango de alcance
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
