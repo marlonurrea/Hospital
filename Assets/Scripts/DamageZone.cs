@@ -1,74 +1,78 @@
-using UnityEngine;
+using UnityEngine; // Importamos las herramientas principales de Unity para usar scripts y componentes
 
-public class DamageZone : MonoBehaviour
+public class DamageZone : MonoBehaviour // Define la clase principal para la zona de daño; hereda de MonoBehaviour
 {
-    [Header("Configuración del Daño")]
-    [Tooltip("Cantidad de daño infligido al jugador.")]
-    [SerializeField] private int damageAmount = 10;
+    [Header("Configuración del Daño")] // Agrupa las variables de daño en el Inspector de Unity
+    [Tooltip("Cantidad de daño infligido al jugador.")] // Explica en el Inspector para qué sirve la variable
+    [SerializeField] private int damageAmount = 10; // Almacena el daño que se aplicará al jugador (10 por defecto)
 
-    [Tooltip("¿Daño por segundo? Si está activo, el jugador recibirá daño continuamente mientras permanezca dentro.")]
-    [SerializeField] private bool damageOverTime = false;
+    [Tooltip("¿Daño por segundo? Si está activo, el jugador recibirá daño continuamente mientras permanezca dentro.")] // Descripción en el Inspector
+    [SerializeField] private bool damageOverTime = false; // Define si el daño se aplica una sola vez o repetitivamente
 
-    [Tooltip("Intervalo en segundos entre cada tick de daño (solo si 'damageOverTime' está activo).")]
-    [SerializeField] private float damageInterval = 1f;
+    [Tooltip("Intervalo en segundos entre cada tick de daño (solo si 'damageOverTime' está activo).")] // Descripción en el Inspector
+    [SerializeField] private float damageInterval = 1f; // Determina la velocidad a la que el jugador recibe daño continuo
 
-    private float timer = 0f;
-    private bool isPlayerInside = false;
+    private float timer = 0f; // Un temporizador interno para llevar la cuenta del tiempo transcurrido
+    private bool isPlayerInside = false; // Variable para saber si el jugador está actualmente dentro de la zona de daño
 
-    private void Update()
+    private void Update() // Método de Unity que se ejecuta en cada fotograma del juego
     {
-        if (damageOverTime && isPlayerInside)
+        if (damageOverTime && isPlayerInside) // Si el daño es continuo y el jugador está dentro de la zona
         {
-            timer += Time.deltaTime;
-            if (timer >= damageInterval)
+            timer += Time.deltaTime; // Sumamos el tiempo que ha pasado desde el último fotograma al temporizador
+            if (timer >= damageInterval) // Si el tiempo acumulado supera o iguala el intervalo definido
             {
-                ApplyDamage();
-                timer = 0f;
+                ApplyDamage(); // Llamamos al método que le quita vida al jugador
+                timer = 0f; // Reiniciamos el temporizador para volver a contar el tiempo
             }
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) // Detecta cuando un objeto entra en la zona invisible (Trigger)
     {
-        // Comprobar si el objeto es el jugador (por Tag o por script de movimiento)
-        if (other.CompareTag("Player") || other.GetComponent<PlayerMovement>() != null)
+        if (IsPlayer(other.gameObject)) // Usamos nuestro método auxiliar para verificar si entró el jugador
         {
-            isPlayerInside = true;
-            timer = damageInterval; // Para hacer daño instantáneo al entrar si está en modo "over time"
+            isPlayerInside = true; // Confirmamos que el jugador está adentro
+            timer = damageInterval; // Forzamos que el daño continuo se aplique de inmediato al entrar
             
-            if (!damageOverTime)
+            if (!damageOverTime) // Si el daño NO es continuo (es decir, es daño de un solo golpe)
             {
-                ApplyDamage();
+                ApplyDamage(); // Aplicamos el daño de inmediato
             }
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other) // Detecta cuando un objeto sale de la zona invisible (Trigger)
     {
-        if (other.CompareTag("Player") || other.GetComponent<PlayerMovement>() != null)
+        if (IsPlayer(other.gameObject)) // Si el objeto que salió es el jugador
         {
-            isPlayerInside = false;
+            isPlayerInside = false; // Indicamos que el jugador ya no está adentro para detener el daño continuo
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision) // Detecta colisiones físicas directas (como chocar contra un muro con daño)
     {
-        // Soporte para colisionadores físicos normales (que no son Triggers)
-        if (collision.gameObject.CompareTag("Player") || collision.gameObject.GetComponent<PlayerMovement>() != null)
+        if (IsPlayer(collision.gameObject)) // Si chocamos físicamente contra el jugador
         {
-            ApplyDamage();
+            ApplyDamage(); // Aplicamos daño al instante
         }
     }
 
-    private void ApplyDamage()
+    private bool IsPlayer(GameObject obj) // Método auxiliar creado para no repetir código. Verifica si un objeto es el jugador
     {
-        if (PlayerHealth.Instance != null)
+        // Retorna verdadero (true) si el objeto tiene la etiqueta "Player" o tiene el componente "PlayerMovement"
+        return obj.CompareTag("Player") || obj.GetComponent<PlayerMovement>() != null;
+    }
+
+    private void ApplyDamage() // Método responsable de ordenar que se reste vida al jugador
+    {
+        if (PlayerHealth.Instance != null) // Nos aseguramos de que exista el script principal de salud del jugador en la escena
         {
-            PlayerHealth.Instance.TakeDamage(damageAmount);
+            PlayerHealth.Instance.TakeDamage(damageAmount); // Le indicamos al script de salud que reste la cantidad de daño especificada
         }
-        else
+        else // Si no hay sistema de salud (por ejemplo, si el jugador murió o no se cargó bien)
         {
-            Debug.LogWarning("[DamageZone] Intento de infligir daño pero no hay ninguna instancia de PlayerHealth en la escena.");
+            Debug.LogWarning("[DamageZone] Intento de infligir daño pero no se encontró PlayerHealth en la escena."); // Mostramos una advertencia
         }
     }
 }

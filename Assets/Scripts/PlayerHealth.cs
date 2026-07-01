@@ -1,201 +1,162 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // Utiliza el nuevo Input System del proyecto
+using UnityEngine; // Librería estándar
+using UnityEngine.UI; // UI básica
+using TMPro; // Interfaz moderna para textos
+using UnityEngine.SceneManagement; // Permite cargar otra escena si morimos
+using UnityEngine.InputSystem; // Sistema para detectar teclados modernos o mandos
 
-public class PlayerHealth : MonoBehaviour
+public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida o el tiempo del jugador
 {
+    // Singleton para acceder a esta clase desde otros scripts muy fácilmente
     public static PlayerHealth Instance { get; private set; }
 
-    [Header("Referencias de UI")]
+    [Header("Referencias de UI")] // Organización en el Inspector
     [Tooltip("Slider que representa la barra de salud (opcional).")]
-    [SerializeField] private Slider healthSlider;
+    [SerializeField] private Slider healthSlider; // Barra clásica (Slider) para vida
 
-    [Tooltip("Imagen tipo Filled que representa la barra de salud (opcional, ej: Image de barra roja).")]
-    [SerializeField] private Image healthImageFill;
+    [Tooltip("Imagen tipo Filled que representa la barra de salud (opcional).")]
+    [SerializeField] private Image healthImageFill; // Barra moderna circular o lineal que se vacía
 
     [Tooltip("Texto para mostrar la salud (ej: '100 / 100') (opcional).")]
-    [SerializeField] private TextMeshProUGUI healthText;
+    [SerializeField] private TextMeshProUGUI healthText; // Texto en pantalla con números
 
     [Header("Modo Temporizador")]
     [Tooltip("Si está activo, la vida del jugador actuará como un temporizador que disminuye con el tiempo.")]
-    [SerializeField] private bool useAsTimer = true;
+    [SerializeField] private bool useAsTimer = true; // Casilla para convertir la barra de vida en reloj contrarreloj
 
-    [Tooltip("Duración en segundos del nivel (ej: 59 segundos).")]
-    [SerializeField] private float levelDuration = 59f;
+    [Tooltip("Duración en segundos del nivel.")]
+    [SerializeField] private float levelDuration = 59f; // Segundos que durará el nivel
 
     [Header("Configuración de Muerte")]
     [Tooltip("Nombre de la escena a cargar cuando el jugador muere.")]
-    [SerializeField] private string gameOverSceneName = "Fin del Juego";
+    [SerializeField] private string gameOverSceneName = "Fin del Juego"; // Escena de "Has Perdido"
 
     [Header("Pruebas de Desarrollo")]
-    [Tooltip("Si está activo, al presionar la tecla K en el teclado recibirás 10 de daño.")]
-    [SerializeField] private bool enableTestDamageKey = true;
+    [Tooltip("Si está activo, al presionar la tecla K recibirás daño.")]
+    [SerializeField] private bool enableTestDamageKey = true; // Botón de trampa para pruebas de los programadores
 
-    private float currentHealthTimer;
-    private bool isPaused = false; // Estado de pausa del temporizador
+    private float currentHealthTimer; // Reloj interno para llevar la cuenta si está en modo contrarreloj
+    private bool isPaused = false; // Detiene el daño por tiempo si hablamos con un NPC
 
     /// <summary>
     /// Pausa o reanuda la cuenta atrás de la vida.
     /// </summary>
-    public void SetPaused(bool paused)
+    public void SetPaused(bool paused) // Función que otras clases pueden llamar (Ej: al abrir un menú)
     {
-        isPaused = paused;
+        isPaused = paused; // Actualizamos el estado interno
         Debug.Log($"[PlayerHealth] Temporizador pausado: {paused}");
     }
 
-    private void Awake()
+    private void Awake() // Se ejecuta antes que nada
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        // Configuramos la variable única para el sistema (Singleton)
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject); // Evitamos duplicados
     }
 
-    private void Start()
+    private void Start() // Se ejecuta al inicio del nivel
     {
-        // Forzar la búsqueda y asignación del objeto correcto 'relleno salud' para evitar que se asigne el fondo por error
+        // Buscar inteligentemente la imagen de "relleno salud" en la interfaz si olvidamos arrastrarla al Inspector
         GameObject go = GameObject.Find("relleno salud");
-        if (go != null)
-        {
-            healthImageFill = go.GetComponent<Image>();
-            if (healthImageFill != null)
-            {
-                Debug.Log("[PlayerHealth] Asignado 'relleno salud' dinámicamente.");
-            }
-        }
+        if (go != null) healthImageFill = go.GetComponent<Image>();
 
-        // Forzar la búsqueda y asignación del texto de salud
+        // Buscar el texto "Salud" de la misma forma para conectarlo solo
         GameObject textGo = GameObject.Find("Salud");
         if (textGo != null)
         {
             healthText = textGo.GetComponent<TextMeshProUGUI>();
-            if (healthText == null)
-            {
-                healthText = textGo.GetComponentInChildren<TextMeshProUGUI>();
-            }
-            if (healthText != null)
-            {
-                Debug.Log("[PlayerHealth] Asignado texto 'Salud' dinámicamente.");
-            }
+            if (healthText == null) healthText = textGo.GetComponentInChildren<TextMeshProUGUI>();
         }
 
+        // Leer datos del guardado (para saber con cuánta vida entramos al nivel)
         if (GameProgress.Instance != null)
         {
-            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth;
-            if (maxHealth <= 0)
+            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Leemos salud máxima
+            if (maxHealth <= 0) // Prevención de errores (evita empezar con vida máxima cero)
             {
                 maxHealth = 100;
-                GameProgress.Instance.progressData.playerMaxHealth = 100; // Asegurar que quede corregido en memoria
+                GameProgress.Instance.progressData.playerMaxHealth = 100;
             }
-            currentHealthTimer = maxHealth;
-            GameProgress.Instance.progressData.playerHealth = maxHealth;
-            Debug.Log($"[PlayerHealth] Start: Inicializado a {maxHealth} (timer: {currentHealthTimer})");
+            
+            currentHealthTimer = maxHealth; // Inicializamos reloj interno
+            GameProgress.Instance.progressData.playerHealth = maxHealth; // Sanamos por completo al empezar el nivel
         }
-        else
+        else // Si no hay sistema de guardado (juego no conectado)
         {
-            currentHealthTimer = 100f;
-            Debug.Log($"[PlayerHealth] Start: GameProgress es nulo, inicializado a 100");
+            currentHealthTimer = 100f; // Asignamos vida de respaldo
         }
-        UpdateHealthUI();
+        
+        UpdateHealthUI(); // Actualizamos la pantalla con la nueva salud
     }
 
-    private void Update()
+    private void Update() // Se ejecuta todo el tiempo
     {
-        if (useAsTimer)
+        if (useAsTimer) // Si estamos en modo Contrarreloj (La vida baja sola)
         {
-            // Detener el temporizador si está en pausa o si el nivel ya se completó
-            if (isPaused || (LevelComplete.Instance != null && LevelComplete.Instance.IsLevelCompleted()))
-            {
-                return;
-            }
+            // Pausar daño si es necesario o si ya ganamos el nivel
+            if (isPaused || (LevelComplete.Instance != null && LevelComplete.Instance.IsLevelCompleted())) return;
 
-            // Calcular cuánto daño equivale a 1 segundo de tiempo
+            // Calcular cuánto equivale 1 segundo de vida en porcentaje
             int maxHealth = GameProgress.Instance != null ? GameProgress.Instance.progressData.playerMaxHealth : 100;
-            if (maxHealth <= 0) maxHealth = 100;
+            if (maxHealth <= 0) maxHealth = 100; // Evitar división por cero
 
-            float decreaseRate = (float)maxHealth / levelDuration;
-            currentHealthTimer -= decreaseRate * Time.deltaTime;
+            float decreaseRate = (float)maxHealth / levelDuration; // Cuánta vida quitamos por segundo de la vida real
+            currentHealthTimer -= decreaseRate * Time.deltaTime; // Restamos vida basados en fotogramas
 
-            if (currentHealthTimer < 0)
-            {
-                currentHealthTimer = 0;
-            }
+            if (currentHealthTimer < 0) currentHealthTimer = 0; // Evitamos vidas negativas (-5)
 
-            if (GameProgress.Instance != null)
-            {
-                GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
-            }
+            // Guardamos la nueva vida en el progreso general
+            if (GameProgress.Instance != null) GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
 
-            UpdateHealthUI();
+            UpdateHealthUI(); // Actualizamos gráficas
 
-            if (currentHealthTimer <= 0)
-            {
-                Die();
-            }
+            // Si nos quedamos sin vida, ejecutamos la función de muerte
+            if (currentHealthTimer <= 0) Die();
         }
 
-        // Tecla de prueba para recibir daño rápidamente (reduce tiempo restante en modo temporizador)
+        // Truco para desarrolladores: Quitarse vida pulsando K para probar la muerte más rápido
         if (enableTestDamageKey && Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame)
         {
-            Debug.Log("[Prueba] Tecla K presionada. Perdiendo 10 segundos/puntos de vida.");
-            TakeDamage(10);
+            TakeDamage(10); // Hacemos 10 de daño artificial
         }
     }
 
     /// <summary>
-    /// Resta vida al jugador (o tiempo restante si el modo temporizador está activo), actualiza la UI y verifica si ha muerto.
+    /// Resta vida (o tiempo) y actualiza la UI.
     /// </summary>
-    /// <param name="amount">Cantidad de daño/tiempo a restar.</param>
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount) // Función pública para que zonas como el fuego nos puedan hacer daño
     {
-        if (GameProgress.Instance == null)
-        {
-            Debug.LogWarning("[PlayerHealth] No se encontró la instancia de GameProgress. No se puede guardar el daño.");
-            return;
-        }
+        if (GameProgress.Instance == null) return; // Si no hay donde guardar, ignoramos
 
-        if (useAsTimer)
+        if (useAsTimer) // Si estamos en modo tiempo, restamos segundos
         {
             currentHealthTimer -= amount;
             if (currentHealthTimer < 0) currentHealthTimer = 0;
             GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
         }
-        else
+        else // Modo daño clásico (por golpes)
         {
             GameProgress.Instance.progressData.playerHealth -= amount;
-            if (GameProgress.Instance.progressData.playerHealth < 0)
-            {
-                GameProgress.Instance.progressData.playerHealth = 0;
-            }
+            if (GameProgress.Instance.progressData.playerHealth < 0) GameProgress.Instance.progressData.playerHealth = 0;
         }
 
-        UpdateHealthUI();
-        GameProgress.Instance.SaveProgress();
+        UpdateHealthUI(); // Refrescar pantalla
+        GameProgress.Instance.SaveProgress(); // Guardar avance
 
-        if (GameProgress.Instance.progressData.playerHealth <= 0)
-        {
-            Die();
-        }
+        // Morimos si la vida es 0
+        if (GameProgress.Instance.progressData.playerHealth <= 0) Die();
     }
 
     /// <summary>
-    /// Cura al jugador (o añade tiempo restante si el modo temporizador está activo).
+    /// Cura al jugador (o añade tiempo si es temporizador).
     /// </summary>
-    /// <param name="amount">Cantidad de curación/tiempo a añadir.</param>
-    public void Heal(int amount)
+    public void Heal(int amount) // Función para curarnos (botiquines, pociones)
     {
         if (GameProgress.Instance == null) return;
 
-        int maxHealth = GameProgress.Instance.progressData.playerMaxHealth;
+        int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Límite máximo
         if (maxHealth <= 0) maxHealth = 100;
         
-        if (useAsTimer)
+        if (useAsTimer) // Mismas reglas que TakeDamage, pero sumando
         {
             currentHealthTimer += amount;
             if (currentHealthTimer > maxHealth) currentHealthTimer = maxHealth;
@@ -204,10 +165,7 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             GameProgress.Instance.progressData.playerHealth += amount;
-            if (GameProgress.Instance.progressData.playerHealth > maxHealth)
-            {
-                GameProgress.Instance.progressData.playerHealth = maxHealth;
-            }
+            if (GameProgress.Instance.progressData.playerHealth > maxHealth) GameProgress.Instance.progressData.playerHealth = maxHealth;
         }
 
         UpdateHealthUI();
@@ -217,69 +175,58 @@ public class PlayerHealth : MonoBehaviour
     /// <summary>
     /// Sincroniza y actualiza la interfaz visual de salud (barra y/o texto).
     /// </summary>
-    public void UpdateHealthUI()
+    public void UpdateHealthUI() // Función interna que sincroniza las matemáticas con las barras de la pantalla
     {
         if (GameProgress.Instance == null) return;
 
-        int current = GameProgress.Instance.progressData.playerHealth;
-        int max = GameProgress.Instance.progressData.playerMaxHealth;
-        
-        if (max <= 0)
-        {
-            max = 100; // Evitar división por cero si max es 0 o menor
-        }
+        int current = GameProgress.Instance.progressData.playerHealth; // Vida actual numérica
+        int max = GameProgress.Instance.progressData.playerMaxHealth; // Vida máxima numérica
+        if (max <= 0) max = 100; // Evitar que el juego reviente al dividir entre cero
 
-        float percent = (float)current / max;
+        float percent = (float)current / max; // Cálculo del porcentaje (0.0 a 1.0) para las barras
 
-        // 1. Si usas un Slider de UI
+        // Actualizar barra clásica (Slider)
         if (healthSlider != null)
         {
             healthSlider.maxValue = max;
             healthSlider.value = current;
         }
 
-        // 2. Si usas una Imagen con tipo de llenado "Filled" (muy común en barras personalizadas)
+        // Actualizar barra moderna circular o rellena
         if (healthImageFill != null)
         {
             healthImageFill.fillAmount = percent;
         }
 
-        // 3. Si tienes un texto de texto para los valores numéricos o de tiempo
+        // Actualizar los textos con números
         if (healthText != null)
         {
-            if (useAsTimer)
+            if (useAsTimer) // Mostrar formato de reloj en minutos y segundos
             {
-                // Formatear el tiempo restante en formato Minutos:Segundos
-                int minutes = Mathf.FloorToInt(currentHealthTimer / 60f);
-                int seconds = Mathf.FloorToInt(currentHealthTimer % 60f);
-                healthText.text = string.Format("Tiempo: {0:00}:{1:00}", minutes, seconds);
+                int minutes = Mathf.FloorToInt(currentHealthTimer / 60f); // Sacamos los minutos
+                int seconds = Mathf.FloorToInt(currentHealthTimer % 60f); // Sacamos los segundos sobrantes
+                healthText.text = string.Format("Tiempo: {0:00}:{1:00}", minutes, seconds); // Formato digital
             }
-            else
+            else // Daño por golpes, el usuario solicitó que solo diga "Salud" sin números
             {
-                healthText.text = $"Salud: {current} / {max}";
+                healthText.text = "Salud";
             }
         }
     }
 
-    private void Die()
+    private void Die() // Función de muerte
     {
-        Debug.Log("[PlayerHealth] El jugador ha muerto. Cargando pantalla de Fin del Juego.");
+        Debug.Log("[PlayerHealth] El jugador ha muerto."); // Aviso de sistema
         
-        // Restablecer la salud al máximo para cuando reinicie la partida
+        // Restauramos la salud al tope en los archivos de guardado para la siguiente partida
         if (GameProgress.Instance != null)
         {
             GameProgress.Instance.progressData.playerHealth = GameProgress.Instance.progressData.playerMaxHealth;
             GameProgress.Instance.SaveProgress();
         }
 
-        // Cargar escena de fin de juego con transición suave si existe
-        if (LevelTransitionManager.Instance != null)
-        {
-            LevelTransitionManager.Instance.TransitionToScene(gameOverSceneName);
-        }
-        else
-        {
-            SceneManager.LoadScene(gameOverSceneName);
-        }
+        // Manda al jugador a la escena de GameOver
+        if (LevelTransitionManager.Instance != null) LevelTransitionManager.Instance.TransitionToScene(gameOverSceneName);
+        else SceneManager.LoadScene(gameOverSceneName);
     }
 }
