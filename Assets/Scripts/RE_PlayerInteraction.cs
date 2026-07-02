@@ -1,163 +1,98 @@
-using UnityEngine; // Herramientas básicas de Unity para scripts
-using UnityEngine.InputSystem; // Herramientas modernas para detectar botones (teclado/mando)
+using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class RE_PlayerInteraction : MonoBehaviour // Clase principal para que el jugador pueda interactuar con el entorno
+// -----------------------------------------------------------------------------
+// SCRIPT: RE_PlayerInteraction
+// METÁFORA: "El Radar y la Mano del Jugador"
+// Versión ultra simplificada: Solo detecta NPCs usando una burbuja alrededor del jugador.
+// -----------------------------------------------------------------------------
+public class RE_PlayerInteraction : MonoBehaviour 
 {
-    public enum DetectionMethod // Enumera las dos formas en que podemos detectar objetos
+    [Header("Ajustes de Detección")]
+    [Tooltip("El tamaño de la burbuja invisible alrededor del jugador para detectar NPCs.")]
+    public float sphereRadius = 2.0f; // Qué tan cerca debes estar del NPC para poder hablarle.
+
+    [Tooltip("El filtro para ignorar paredes y solo detectar objetos interactuables.")]
+    public LayerMask interactableMask; // Las "Gafas" que solo ven cosas con las que se puede hablar.
+
+    private IInteractable currentInteractable; // Nuestra memoria: "¿A quién estamos mirando ahora mismo?"
+
+    void Update() // Se ejecuta todo el tiempo
     {
-        SphereCheckFromPlayer, // Detectar objetos en un área circular alrededor del jugador
-        RaycastFromCamera      // Lanzar un "láser" invisible desde la cámara (para juegos de disparos/primera persona)
-    }
-
-    [Header("Ajustes de Detección")] // Organización en el Inspector
-    [Tooltip("Método para detectar objetos interactuables.")]
-    public DetectionMethod detectionMethod = DetectionMethod.SphereCheckFromPlayer; // Por defecto usa el círculo alrededor del jugador
-
-    [Tooltip("Distancia máxima de interacción.")]
-    public float interactionDistance = 3.0f; // Qué tan lejos llega el "láser" si usamos Raycast
-
-    [Tooltip("Capa (LayerMask) en la que están los objetos interactuables.")]
-    public LayerMask interactableMask; // Filtro para solo detectar cosas en la capa "Interactuable" y no paredes
-
-    [Header("Ajustes de Esfera (SphereCheck)")] // Ajustes específicos del área circular
-    [Tooltip("Radio de la esfera de detección alrededor del jugador.")]
-    public float sphereRadius = 2.0f; // Tamaño del área circular
-
-    [Header("Referencias")] // Objetos necesarios
-    [Tooltip("Referencia a la cámara (requerido para RaycastDesdeCamara).")]
-    public Transform cameraTransform; // La cámara del jugador
-
-    private IInteractable currentInteractable; // Guarda el objeto interactuable que estamos mirando o tocando actualmente
-
-    void Start() // Se ejecuta al empezar el nivel
-    {
-        // Si olvidamos conectar la cámara en el Inspector, el juego busca automáticamente la cámara principal ("Main Camera")
-        if (cameraTransform == null && Camera.main != null)
-        {
-            cameraTransform = Camera.main.transform;
-        }
-    }
-
-    void Update() // Se ejecuta todo el tiempo, muchísimas veces por segundo (cada fotograma)
-    {
-        // 1. Escanear el entorno buscando cosas con las que interactuar
+        // ---------------------------------------------------------
+        // PASO 1: ENCENDER EL RADAR (Buscar NPCs cerca)
+        // ---------------------------------------------------------
         FindInteractable();
 
-        // 2. Verificar si presionamos el botón de interacción
-        bool interactPressed = false; // Variable temporal (bandera)
-
-        // Comprueba si se presionó la tecla 'E' en el teclado
+        // ---------------------------------------------------------
+        // PASO 2: APRETAR LA TECLA PARA HABLAR
+        // ---------------------------------------------------------
+        // Si apretamos la tecla 'E' Y ADEMÁS tenemos a alguien en frente...
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
-            interactPressed = true; // Levantamos la bandera
-        }
-
-        // Comprueba si se presionó el botón 'Cuadrado' (PlayStation) o 'X' (Xbox) en un mando
-        if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)
-        {
-            interactPressed = true; // Levantamos la bandera
-        }
-
-        // 3. Ejecutar la acción si apretamos el botón y hay un objeto cerca
-        if (interactPressed && currentInteractable != null)
-        {
-            currentInteractable.Interact(); // Llamamos a la función Interact del objeto
+            if (currentInteractable != null)
+            {
+                // Le damos la orden a ese NPC de que hable (Llama al script RE_NPCInteraction).
+                currentInteractable.Interact(); 
+            }
         }
     }
 
-    private void FindInteractable() // Función encargada del escaneo
+    private void FindInteractable()
     {
-        IInteractable foundInteractable = null; // Variable temporal para guardar lo que encontremos
+        IInteractable foundInteractable = null; // Empezamos asumiendo que no hay nadie cerca.
 
-        if (detectionMethod == DetectionMethod.RaycastFromCamera && cameraTransform != null) // Si usamos el modo "Láser"
+        // 1. Dibujamos una burbuja mágica invisible alrededor del jugador.
+        // Todo lo que toque la burbuja y coincida con la capa "interactableMask" entra en la lista.
+        Collider[] colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask); 
+        
+        // Si el filtro falló, probamos atrapar TODO lo que esté en la burbuja.
+        if (colliders == null || colliders.Length == 0) 
         {
-            // Creamos un rayo invisible que sale de la cámara hacia el frente
-            Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
-            RaycastHit hit; // Aquí se guardará la información de lo que golpeamos
-
-            bool hitSomething = false;
-            if (interactableMask.value != 0) // Si tenemos un filtro de capa...
-            {
-                // Disparamos el rayo usando el filtro (ignora objetos normales)
-                hitSomething = Physics.Raycast(ray, out hit, interactionDistance, interactableMask);
-            }
-            else // Si no hay filtro...
-            {
-                // Disparamos a todo
-                hitSomething = Physics.Raycast(ray, out hit, interactionDistance);
-            }
-
-            if (hitSomething) // Si el rayo chocó con algo
-            {
-                // Buscamos si el objeto que golpeamos tiene un script de interactuar
-                foundInteractable = hit.collider.GetComponent<IInteractable>();
-                if (foundInteractable == null) foundInteractable = hit.collider.GetComponentInParent<IInteractable>(); // Buscamos en el "padre"
-                if (foundInteractable == null) foundInteractable = hit.collider.GetComponentInChildren<IInteractable>(); // Buscamos en el "hijo"
-            }
+            colliders = Physics.OverlapSphere(transform.position, sphereRadius);
         }
-        else if (detectionMethod == DetectionMethod.SphereCheckFromPlayer) // Si usamos el modo de "Círculo" (por cercanía)
+
+        // 2. Buscar al NPC MÁS CERCANO dentro de la burbuja.
+        float closestDistance = Mathf.Infinity; // Empezamos a medir desde el infinito.
+
+        foreach (Collider col in colliders) // Revisamos los objetos tocados uno por uno
         {
-            Collider[] colliders = null; // Lista de todo lo que esté en nuestro círculo
-            
-            if (interactableMask.value != 0) // Si usamos filtro
+            // Le buscamos en los bolsillos el "Carnet de Interactuable" (La interfaz IInteractable).
+            IInteractable interactable = col.GetComponent<IInteractable>(); 
+            if (interactable == null) interactable = col.GetComponentInParent<IInteractable>();
+            if (interactable == null) interactable = col.GetComponentInChildren<IInteractable>();
+
+            if (interactable != null) // Si sí tiene el carnet (¡Es un NPC válido!)...
             {
-                colliders = Physics.OverlapSphere(transform.position, sphereRadius, interactableMask); // Guardamos lo detectado
-            }
-
-            // Si no detectó nada con filtro o no hay filtro, hacemos un escaneo general
-            if (colliders == null || colliders.Length == 0)
-            {
-                colliders = Physics.OverlapSphere(transform.position, sphereRadius);
-            }
-
-            float closestDistance = Mathf.Infinity; // Variable para calcular qué está más cerca (inicia en infinito)
-
-            foreach (Collider col in colliders) // Revisamos cada objeto encontrado en el círculo uno por uno
-            {
-                // Buscamos el script en el objeto
-                IInteractable interactable = col.GetComponent<IInteractable>();
-                if (interactable == null) interactable = col.GetComponentInParent<IInteractable>();
-                if (interactable == null) interactable = col.GetComponentInChildren<IInteractable>();
-
-                if (interactable != null) // Si efectivamente era un objeto interactuable
+                // Medimos con una cinta métrica a cuántos metros exactos está de nosotros.
+                float distanceToCollider = Vector3.Distance(transform.position, col.transform.position);
+                
+                if (distanceToCollider < closestDistance) // Si está más cerca que el último que revisamos...
                 {
-                    // Calculamos la distancia exacta entre nosotros y ese objeto
-                    float distanceToCollider = Vector3.Distance(transform.position, col.transform.position);
-                    
-                    if (distanceToCollider < closestDistance) // Si está más cerca que el último objeto que encontramos...
-                    {
-                        closestDistance = distanceToCollider; // Actualizamos el récord de cercanía
-                        foundInteractable = interactable; // Lo marcamos como nuestro "objetivo actual"
-                    }
+                    closestDistance = distanceToCollider; // Actualizamos nuestro récord de cercanía.
+                    foundInteractable = interactable; // Lo coronamos como el "NPC Actual" con el que vamos a hablar.
                 }
             }
         }
 
-        // Si el objeto al que miramos ahora es diferente al que mirábamos hace un momento
+        // 3. Actualizamos nuestra memoria
+        // Si cambiamos de objetivo (ej. nos alejamos del Guardia y nos acercamos al Civil).
         if (foundInteractable != currentInteractable)
         {
-            currentInteractable = foundInteractable; // Actualizamos nuestro objetivo
-
-            if (currentInteractable != null) // Si encontramos algo...
-            {
-                Debug.Log("[Interacción] Detectado: " + currentInteractable.GetInteractPrompt()); // Mensaje de prueba
-            }
+            currentInteractable = foundInteractable; 
         }
     }
 
-    // Permite que la interfaz de usuario de la pantalla pregunte "¿A qué estamos mirando?" para dibujar el botón "E"
+    // Un puente para que el creador del juego pueda dibujar el letrero de "Presiona E" en la pantalla.
     public IInteractable GetCurrentInteractable()
     {
-        return currentInteractable; // Devuelve el objetivo actual
+        return currentInteractable; 
     }
 
-    // Función exclusiva de Unity para dibujar una esfera amarilla en la pestaña 'Scene' para facilitar la programación
+    // Dibuja la burbuja amarilla en la ventana de Scene de Unity para que tú la puedas ver al programar.
     private void OnDrawGizmosSelected()
     {
-        if (detectionMethod == DetectionMethod.SphereCheckFromPlayer)
-        {
-            Gizmos.color = Color.yellow; // Pintamos la esfera de amarillo
-            Gizmos.DrawWireSphere(transform.position, sphereRadius); // Dibujamos un marco alámbrico
-        }
+        Gizmos.color = Color.yellow; 
+        Gizmos.DrawWireSphere(transform.position, sphereRadius); 
     }
 }

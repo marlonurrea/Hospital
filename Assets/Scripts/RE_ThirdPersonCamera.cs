@@ -1,115 +1,118 @@
-using UnityEngine;
-using UnityEngine.InputSystem; // Necesario para detectar ratón y joystick moderno
+using UnityEngine; // Herramientas físicas de Unity
+using UnityEngine.InputSystem; // Sistema de ratón moderno
 
-public class RE_ThirdPersonCamera : MonoBehaviour // Script principal para la cámara en tercera persona que sigue al jugador
+// -----------------------------------------------------------------------------
+// SCRIPT: RE_ThirdPersonCamera
+// METÁFORA: "El Camarógrafo Flotante"
+// Este script es como un camarógrafo invisible que flota detrás del jugador, 
+// girando sobre un eje y persiguiéndolo por el hospital.
+// -----------------------------------------------------------------------------
+public class RE_ThirdPersonCamera : MonoBehaviour
 {
     [Header("Objetivo")]
-    [Tooltip("El objeto que la cámara debe seguir (el jugador).")]
-    public Transform target; // El jugador al que seguiremos
-    
-    [Tooltip("Desplazamiento para no apuntar a los pies. Usualmente apunta a los hombros/cabeza.")]
-    public Vector3 targetOffset = new Vector3(0, 1.5f, 0); // Lo usamos para que la cámara apunte a la cabeza y no a los pies
+    [Tooltip("El objeto que la cámara va a seguir (generalmente el jugador).")]
+    public Transform target; // El actor al que persigue nuestro camarógrafo.
 
-    [Header("Configuración de Cámara")]
-    [Tooltip("Distancia base de la cámara al jugador.")]
-    public float distance = 5.0f; // Qué tan lejos flota la cámara por detrás
+    [Header("Posición de Cámara")]
+    [Tooltip("La distancia a la que la cámara estará del jugador.")]
+    public float distance = 5.0f; // Qué tan lejos está flotando (5 metros de distancia)
     
-    [Tooltip("Distancia mínima al chocar con una pared.")]
-    public float minDistance = 1.0f; // Lo más cerca que puede llegar a estar (para que no se meta dentro de su propia cabeza)
+    [Tooltip("Altura base hacia donde mira la cámara.")]
+    public float height = 1.5f; // A qué altura está el lente (1.5m es altura de los hombros/cabeza)
     
+    [Tooltip("El desplazamiento lateral de la cámara.")]
+    public Vector3 offset = new Vector3(0, 0, 0); // Ajustes precisos si la queremos ligeramente hacia la derecha (estilo Resident Evil 4)
+
     [Header("Sensibilidad")]
-    public float mouseSensitivity = 1.5f; // Velocidad de giro con el ratón
-    public float controllerSensitivity = 150.0f; // Velocidad de giro con un joystick
+    [Tooltip("Velocidad de rotación usando el ratón.")]
+    public float mouseSensitivity = 2.0f; // Qué tan rápido voltea la cámara cuando mueves el ratón
 
-    [Header("Límites de Inclinación (Eje Y)")]
-    public float yMinLimit = -20f; // Qué tanto puede mirar hacia abajo
-    public float yMaxLimit = 60f; // Qué tanto puede mirar hacia arriba (hacia el cielo)
+    [Header("Límites de Rotación (Vertical)")]
+    // Evita que el camarógrafo se voltee de cabeza rompiéndose el cuello.
+    public float yMinLimit = -20f; // Límite para mirar hacia abajo
+    public float yMaxLimit = 80f; // Límite para mirar hacia arriba al techo
 
-    [Header("Colisiones (Evitar atravesar paredes)")]
-    [Tooltip("Capas que bloquearán la visión de la cámara (ej. Default, Paredes).")]
-    public LayerMask collisionMask; // Qué objetos pueden bloquear a la cámara (paredes, techos)
+    [Header("Colisiones (Raycast)")]
+    [Tooltip("Capas que bloquearán la cámara, acercándola al jugador.")]
+    public LayerMask collisionLayers; // Paredes que el camarógrafo no puede traspasar.
     
-    public float collisionCushion = 0.2f; // Grosor de la cámara para que no atraviese esquinas afiladas
+    [Tooltip("Radio de la esfera de la cámara para evitar que atraviese paredes muy finas.")]
+    public float cameraRadius = 0.3f; // El tamaño "gordo" del lente de la cámara para que no perfore paredes de papel.
 
-    private float currentX = 0.0f; // Rotación horizontal actual
-    private float currentY = 0.0f; // Rotación vertical actual
-    private float currentDistance; // Distancia real (que se encoge al chocar)
+    private float currentX = 0.0f; // Memoria de los grados rotados a la derecha/izquierda
+    private float currentY = 0.0f; // Memoria de los grados rotados arriba/abajo
+    private float currentDistance; // La distancia real a la que está ahora mismo (se encoge si choca contra pared)
 
-    void Start() // Se ejecuta al inicio
+    void Start()
     {
-        // Ocultar y bloquear el ratón al centro de la pantalla
-        Cursor.lockState = CursorLockMode.Locked; // Evita que se salga del juego
-        Cursor.visible = false; // Lo vuelve invisible
+        // 1. Atrapamos el cursor del ratón en el centro de la pantalla y lo volvemos invisible.
+        // Como en Counter Strike o juegos de disparo, para que no te salgas de la ventana jugando.
+        Cursor.lockState = CursorLockMode.Locked; 
+        Cursor.visible = false; 
 
-        currentDistance = distance; // Inicializamos a la distancia predeterminada
+        currentDistance = distance; // Empezamos a los 5 metros requeridos.
 
-        // Extraemos hacia donde está mirando el personaje actualmente al empezar
+        // Leemos hacia dónde estaba mirando la cámara cuando le dimos a Play, para no dar giros bruscos.
         Vector3 angles = transform.eulerAngles;
-        currentX = angles.y;
-        currentY = angles.x;
+        currentX = angles.y; // Grados en el eje Y (giro horizontal como un trompo)
+        currentY = angles.x; // Grados en el eje X (cabeceo arriba/abajo)
     }
 
-    void LateUpdate() // Se ejecuta CADA FOTOGRAMA DESPUÉS de que Update haya terminado (ideal para cámaras)
+    // LateUpdate ocurre siempre que termina Update.
+    // METÁFORA: Si el jugador camina en Update, la cámara se mueve en LateUpdate.
+    // Así garantizamos que el camarógrafo siga al actor DESPUÉS de que dio el paso, y la imagen no vibre.
+    void LateUpdate() 
     {
-        if (target == null) return; // Si no hay jugador asignado, no hacemos nada
+        if (target == null) return; // Si no hay jugador a quien seguir, apagamos la cámara.
 
-        // Si el ratón no está bloqueado (por ejemplo, si estamos hablando con un NPC), la cámara se congela
-        if (Cursor.lockState != CursorLockMode.Locked) return;
+        // Si el ratón NO está bloqueado (porque estamos en un menú o hablando con un NPC)...
+        if (Cursor.lockState != CursorLockMode.Locked) return; // Congelamos al camarógrafo, no le permitimos girar.
 
-        float mouseX = 0f; // Input temporal horizontal
-        float mouseY = 0f; // Input temporal vertical
+        float mouseX = 0f; // Cuánto movimos el ratón horizontalmente
+        float mouseY = 0f; // Cuánto movimos el ratón verticalmente
 
-        // 1. Escaneo del ratón
+        // ESCANEO DEL RATÓN (Controles de PC exclusivamente)
         if (Mouse.current != null)
         {
-            Vector2 delta = Mouse.current.delta.ReadValue(); // Leemos el cambio de posición del ratón físico
-            mouseX += delta.x * mouseSensitivity * 0.1f;
-            mouseY -= delta.y * mouseSensitivity * 0.1f;
+            Vector2 delta = Mouse.current.delta.ReadValue(); // Leemos la velocidad pura del ratón sobre el escritorio.
+            mouseX += delta.x * mouseSensitivity * 0.1f; // Lo multiplicamos por la sensibilidad
+            mouseY -= delta.y * mouseSensitivity * 0.1f; 
         }
 
-        // 2. Escaneo del mando (Gamepad - Palanca derecha)
-        if (Gamepad.current != null)
-        {
-            Vector2 stick = Gamepad.current.rightStick.ReadValue();
-            mouseX += stick.x * controllerSensitivity * Time.deltaTime; // Se multiplica por deltaTime para mantener consistencia
-            mouseY -= stick.y * controllerSensitivity * Time.deltaTime;
-        }
+        currentX += mouseX; // Acumulamos el giro horizontal total.
+        currentY += mouseY; // Acumulamos el giro vertical total.
 
-        currentX += mouseX; // Sumamos la rotación horizontal
-        currentY += mouseY; // Sumamos la rotación vertical
-
-        // Restringimos la mirada vertical para que la cámara no dé la voltereta por debajo de los pies o por encima de la cabeza
+        // Abrazadera matemática (Clamp): Evita que miremos más arriba del techo o más abajo de los pies.
         currentY = Mathf.Clamp(currentY, yMinLimit, yMaxLimit);
 
-        // Convertimos esos números a una Rotación de Unity (Quaternion)
+        // Traducimos los grados de giro (Euler) a matemáticas de rotación 3D pura (Quaterniones).
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
 
-        // Determinamos el punto central exacto (Los hombros o cabeza del jugador)
-        Vector3 targetPosition = target.position + targetOffset;
+        // ¿Desde dónde mira el camarógrafo? Desde los pies del jugador más la altura de su cabeza (target.position + Vector3.up * height)
+        Vector3 targetPosition = target.position + Vector3.up * height + rotation * offset;
 
-        // Calculamos la dirección en línea recta hacia atrás de dónde debe estar la cámara
-        Vector3 direction = rotation * new Vector3(0, 0, -distance);
-        
-        // --- Sistema Anti-Atravesar Paredes (Collision Handling) ---
-        float desiredDistance = distance; // Guardamos dónde "nos gustaría" estar
-        RaycastHit hit; // Variable para almacenar información del choque
-        
-        // Disparamos una esfera (SphereCast) invisible del tamaño de "collisionCushion" desde la cabeza del jugador hacia la cámara
-        // Si choca contra algo etiquetado en collisionMask (ej: una pared)...
-        if (Physics.SphereCast(targetPosition, collisionCushion, direction.normalized, out hit, distance, collisionMask))
+        // FÍSICA DE COLISIONES: ¡Que la cámara no traspase paredes!
+        // Tiramos un láser (Raycast) desde la cabeza del jugador hacia la cámara.
+        Vector3 directionToCamera = (transform.position - targetPosition).normalized;
+        RaycastHit hit;
+
+        // Si el láser, siendo ancho (SphereCast), choca con una pared (collisionLayers)...
+        if (Physics.SphereCast(targetPosition, cameraRadius, directionToCamera, out hit, distance, collisionLayers))
         {
-            // Acortamos la distancia hasta el punto de choque (para que la cámara quede delante de la pared)
-            desiredDistance = Mathf.Clamp(hit.distance, minDistance, distance);
+            // Achicamos la distancia actual hasta el punto exacto donde chocó, para que la cámara se acerque al jugador y no atraviese la pared.
+            currentDistance = Mathf.Lerp(currentDistance, hit.distance, Time.deltaTime * 10f);
+        }
+        else
+        {
+            // Si el láser pasa limpio, estiramos la cámara a su distancia máxima suavemente.
+            currentDistance = Mathf.Lerp(currentDistance, distance, Time.deltaTime * 10f);
         }
 
-        // Suavizamos (Lerp) el cambio de distancia para que el acercamiento al chocar no dé mareos
-        currentDistance = Mathf.Lerp(currentDistance, desiredDistance, Time.deltaTime * 10f);
-
-        // Calculamos las coordenadas 3D matemáticas finales en el mundo
-        Vector3 position = targetPosition + rotation * new Vector3(0, 0, -currentDistance);
-
-        // Aplicamos la posición y la rotación al objeto de la cámara
-        transform.position = position;
+        // Aplicamos finalmente toda la matemática: Colocamos la cámara flotando detrás de la cabeza en el ángulo calculado.
+        Vector3 finalPosition = targetPosition - (rotation * Vector3.forward * currentDistance);
+        
+        // Ejecutamos visualmente el movimiento y rotación.
+        transform.position = finalPosition;
         transform.rotation = rotation;
     }
 }
