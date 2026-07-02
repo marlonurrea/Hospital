@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Necesario para detectar ratón y joystick moderno
 
-public class ThirdPersonCamera : MonoBehaviour // Script principal para la cámara en tercera persona que sigue al jugador
+public class RE_ThirdPersonCamera : MonoBehaviour // Script principal para la cámara en tercera persona que sigue al jugador
 {
     [Header("Objetivo")]
     [Tooltip("El objeto que la cámara debe seguir (el jugador).")]

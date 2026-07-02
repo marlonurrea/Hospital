@@ -8,10 +8,10 @@ using TMPro; // Librería para usar textos mejorados (TextMeshPro)
 /// Gestiona la lógica que ocurre al completar el nivel, mostrando estadísticas de la partida,
 /// deteniendo el movimiento del jugador, y permitiendo navegar a otros niveles o al menú.
 /// </summary>
-public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cuando terminamos un nivel
+public class RE_LevelComplete : MonoBehaviour // Clase para controlar qué pasa cuando terminamos un nivel
 {
     // Instancia única (Singleton) que permite que otros scripts llamen a este sin necesidad de buscarlo
-    public static LevelComplete Instance { get; private set; }
+    public static RE_LevelComplete Instance { get; private set; }
 
     [Header("Referencias de UI (Pantalla de Éxito)")] // Título para organizar el Inspector de Unity
     [Tooltip("El GameObject del panel que contiene la interfaz de nivel completado.")] // Explicación de la variable
@@ -94,7 +94,7 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
     {
         if (autoCompleteOn100Percent) // Si queremos que termine automático al llegar a 100%
         {
-            GameProgress.OnProgress100 += TriggerLevelComplete; // Nos suscribimos a la alerta de que se llegó a 100%
+            RE_GameProgress.OnProgress100 += TriggerLevelComplete; // Nos suscribimos a la alerta de que se llegó a 100%
         }
     }
 
@@ -102,7 +102,7 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
     {
         if (autoCompleteOn100Percent) // Si estábamos suscritos a la alerta
         {
-            GameProgress.OnProgress100 -= TriggerLevelComplete; // Nos quitamos de la alerta para evitar errores
+            RE_GameProgress.OnProgress100 -= TriggerLevelComplete; // Nos quitamos de la alerta para evitar errores
         }
     }
 
@@ -135,10 +135,10 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
         Cursor.visible = true; // Lo hacemos visible
 
         // Desactivar el control de movimiento del jugador para que no siga caminando
-        PlayerMovement playerMovement = FindFirstObjectByType<PlayerMovement>(); // Buscamos al jugador en el mapa
-        if (playerMovement != null) // Si lo encontramos
+        RE_PlayerMovement RE_PlayerMovement = FindFirstObjectByType<RE_PlayerMovement>(); // Buscamos al jugador en el mapa
+        if (RE_PlayerMovement != null) // Si lo encontramos
         {
-            playerMovement.enabled = false; // Le apagamos el script de caminar
+            RE_PlayerMovement.enabled = false; // Le apagamos el script de caminar
         }
 
         CalcularYMostrarEstadisticas(); // Llamamos a otra función para rellenar los números de tiempo y tareas
@@ -179,10 +179,10 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
         }
 
         // Mostrar Tareas completadas
-        if (GameProgress.Instance != null && tasksText != null) // Si hay sistema de progreso y texto
+        if (RE_GameProgress.Instance != null && tasksText != null) // Si hay sistema de progreso y texto
         {
-            int completed = GameProgress.Instance.progressData.completedTasks.Count; // Contamos cuántas tareas hizo
-            int total = GameProgress.Instance.totalMainTasks; // Vemos cuántas eran en total
+            int completed = RE_GameProgress.Instance.progressData.completedTasks.Count; // Contamos cuántas tareas hizo
+            int total = RE_GameProgress.Instance.totalMainTasks; // Vemos cuántas eran en total
             tasksText.text = string.Format("Tareas: {0} / {1}", completed, total); // Escribimos "X / Y" tareas
         }
         else if (tasksText != null) // Si falló algo pero el texto existe
@@ -191,7 +191,7 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
         }
 
         // Mostrar Salud restante
-        if (GameProgress.Instance != null && healthText != null) // Si hay sistema de progreso y texto
+        if (RE_GameProgress.Instance != null && healthText != null) // Si hay sistema de progreso y texto
         {
             healthText.text = "Salud"; // El usuario solicitó que solo diga "Salud"
         }
@@ -206,16 +206,16 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
     /// </summary>
     public void LoadNextLevel() // Función asignada al botón "Siguiente"
     {
-        if (GameProgress.Instance != null) // Borramos el progreso de nivel porque pasaremos a uno nuevo
+        if (RE_GameProgress.Instance != null) // Borramos el progreso de nivel porque pasaremos a uno nuevo
         {
-            GameProgress.Instance.ResetLevelProgressOnly();
+            RE_GameProgress.Instance.ResetLevelProgressOnly();
         }
 
-        Debug.Log("[LevelComplete] Cargando escena del siguiente nivel: " + nextSceneName); // Aviso por consola
+        Debug.Log("[RE_LevelComplete] Cargando escena del siguiente nivel: " + nextSceneName); // Aviso por consola
         
-        if (LevelTransitionManager.Instance != null) // Si hay animador de pantalla (fundido a negro)
+        if (RE_LevelTransitionManager.Instance != null) // Si hay animador de pantalla (fundido a negro)
         {
-            LevelTransitionManager.Instance.TransitionToScene(nextSceneName); // Transición suave
+            RE_LevelTransitionManager.Instance.TransitionToScene(nextSceneName); // Transición suave
         }
         else // Si no
         {
@@ -228,23 +228,23 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
     /// </summary>
     public void RestartLevel() // Función asignada al botón "Reiniciar"
     {
-        if (GameProgress.Instance != null) // Reiniciamos todo lo del nivel fallido
+        if (RE_GameProgress.Instance != null) // Reiniciamos todo lo del nivel fallido
         {
-            GameProgress.Instance.ResetLevelProgressOnly(); // Borramos progreso de nivel
+            RE_GameProgress.Instance.ResetLevelProgressOnly(); // Borramos progreso de nivel
             
-            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Buscamos vida máxima
+            int maxHealth = RE_GameProgress.Instance.progressData.playerMaxHealth; // Buscamos vida máxima
             if (maxHealth <= 0) maxHealth = 100; // Por si hay error, que sea 100
             
-            GameProgress.Instance.progressData.playerHealth = maxHealth; // Restauramos vida
-            GameProgress.Instance.SaveProgress(); // Guardamos cambio
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = maxHealth; // Restauramos vida
+            RE_GameProgress.Instance.SaveProgress(); // Guardamos cambio
         }
 
         string currentScene = SceneManager.GetActiveScene().name; // Obtenemos el nombre del mapa en el que estamos
-        Debug.Log("[LevelComplete] Reiniciando nivel: " + currentScene); // Aviso en consola
+        Debug.Log("[RE_LevelComplete] Reiniciando nivel: " + currentScene); // Aviso en consola
         
-        if (LevelTransitionManager.Instance != null)
+        if (RE_LevelTransitionManager.Instance != null)
         {
-            LevelTransitionManager.Instance.TransitionToScene(currentScene); // Transición suave al mismo mapa
+            RE_LevelTransitionManager.Instance.TransitionToScene(currentScene); // Transición suave al mismo mapa
         }
         else
         {
@@ -257,10 +257,10 @@ public class LevelComplete : MonoBehaviour // Clase para controlar qué pasa cua
     /// </summary>
     public void LoadMainMenu() // Función para el botón "Menú Principal"
     {
-        Debug.Log("[LevelComplete] Cargando menú principal: " + mainMenuSceneName);
-        if (LevelTransitionManager.Instance != null)
+        Debug.Log("[RE_LevelComplete] Cargando menú principal: " + mainMenuSceneName);
+        if (RE_LevelTransitionManager.Instance != null)
         {
-            LevelTransitionManager.Instance.TransitionToScene(mainMenuSceneName);
+            RE_LevelTransitionManager.Instance.TransitionToScene(mainMenuSceneName);
         }
         else
         {

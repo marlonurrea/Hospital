@@ -22,15 +22,15 @@ public class MainMenu : MonoBehaviour // Clase para controlar la pantalla princi
         PlayerPrefs.Save(); // Confirmamos el borrado en el disco duro
 
         // Si el sistema de progreso del juego ya estaba cargado en memoria...
-        if (GameProgress.Instance != null)
+        if (RE_GameProgress.Instance != null)
         {
-            GameProgress.Instance.ResetProgress(); // Lo reseteamos internamente
+            RE_GameProgress.Instance.ResetProgress(); // Lo reseteamos internamente
         }
 
         // Si tenemos un sistema de transición (pantalla en negro que se aclara)
-        if (LevelTransitionManager.Instance != null)
+        if (RE_LevelTransitionManager.Instance != null)
         {
-            LevelTransitionManager.Instance.TransitionToScene(firstLevelSceneName); // Usamos transición
+            RE_LevelTransitionManager.Instance.TransitionToScene(firstLevelSceneName); // Usamos transición
         }
         else // Si no hay transición
         {

@@ -6,10 +6,10 @@ using System.Collections; // Permite el uso de Corrutinas (funciones que se ejec
 /// Gestiona la transición suave entre niveles mediante un fundido (fade in/out) a negro
 /// y carga los niveles en segundo plano para evitar tirones en el juego.
 /// </summary>
-public class LevelTransitionManager : MonoBehaviour // Clase principal para transiciones entre escenas
+public class RE_LevelTransitionManager : MonoBehaviour // Clase principal para transiciones entre escenas
 {
     // Instancia única (Singleton) para que cualquier script pueda llamarlo sin buscarlo
-    public static LevelTransitionManager Instance { get; private set; }
+    public static RE_LevelTransitionManager Instance { get; private set; }
 
     [Header("Configuración de Transición")] // Categoría en el Inspector
     [Tooltip("El CanvasGroup que contiene la imagen oscura para cubrir la pantalla.")] // Guía de uso
@@ -23,7 +23,7 @@ public class LevelTransitionManager : MonoBehaviour // Clase principal para tran
     private void Awake() // Se ejecuta inmediatamente cuando el objeto se crea
     {
         // Implementamos el patrón Singleton para que no se destruya al cambiar de nivel
-        if (Instance == null) // Si somos el primer LevelTransitionManager en existir...
+        if (Instance == null) // Si somos el primer RE_LevelTransitionManager en existir...
         {
             Instance = this; // Nos asignamos a nosotros mismos
             DontDestroyOnLoad(gameObject); // Evitamos que Unity nos borre al cambiar de escena
@@ -78,10 +78,10 @@ public class LevelTransitionManager : MonoBehaviour // Clase principal para tran
         if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = 1f; // Aseguramos que termine completamente negro
 
         // 3. Actualizar en el sistema de progreso en qué escena estamos a punto de entrar
-        if (GameProgress.Instance != null)
+        if (RE_GameProgress.Instance != null)
         {
-            GameProgress.Instance.progressData.currentSceneName = sceneName; // Guardamos el nombre del mapa
-            GameProgress.Instance.SaveProgress(); // Lo guardamos en el disco duro
+            RE_GameProgress.Instance.progressData.currentSceneName = sceneName; // Guardamos el nombre del mapa
+            RE_GameProgress.Instance.SaveProgress(); // Lo guardamos en el disco duro
         }
 
         // 4. Iniciar la carga del nuevo mapa en segundo plano (asíncrona)
@@ -89,7 +89,7 @@ public class LevelTransitionManager : MonoBehaviour // Clase principal para tran
         
         if (asyncLoad == null) // Si ocurrió un error grave y no existe la escena...
         {
-            Debug.LogError($"[LevelTransitionManager] No se pudo cargar la escena '{sceneName}'. Verifica el Build Settings.");
+            Debug.LogError($"[RE_LevelTransitionManager] No se pudo cargar la escena '{sceneName}'. Verifica el Build Settings.");
             
             // Abortar y volver a hacer la pantalla transparente
             timer = 0f;

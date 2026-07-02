@@ -4,10 +4,10 @@ using TMPro; // Interfaz moderna para textos
 using UnityEngine.SceneManagement; // Permite cargar otra escena si morimos
 using UnityEngine.InputSystem; // Sistema para detectar teclados modernos o mandos
 
-public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida o el tiempo del jugador
+public class RE_PlayerHealth : MonoBehaviour // Clase principal que maneja la vida o el tiempo del jugador
 {
     // Singleton para acceder a esta clase desde otros scripts muy fácilmente
-    public static PlayerHealth Instance { get; private set; }
+    public static RE_PlayerHealth Instance { get; private set; }
 
     [Header("Referencias de UI")] // Organización en el Inspector
     [Tooltip("Slider que representa la barra de salud (opcional).")]
@@ -43,7 +43,7 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
     public void SetPaused(bool paused) // Función que otras clases pueden llamar (Ej: al abrir un menú)
     {
         isPaused = paused; // Actualizamos el estado interno
-        Debug.Log($"[PlayerHealth] Temporizador pausado: {paused}");
+        Debug.Log($"[RE_PlayerHealth] Temporizador pausado: {paused}");
     }
 
     private void Awake() // Se ejecuta antes que nada
@@ -68,17 +68,17 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
         }
 
         // Leer datos del guardado (para saber con cuánta vida entramos al nivel)
-        if (GameProgress.Instance != null)
+        if (RE_GameProgress.Instance != null)
         {
-            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Leemos salud máxima
+            int maxHealth = RE_GameProgress.Instance.progressData.playerMaxHealth; // Leemos salud máxima
             if (maxHealth <= 0) // Prevención de errores (evita empezar con vida máxima cero)
             {
                 maxHealth = 100;
-                GameProgress.Instance.progressData.playerMaxHealth = 100;
+                RE_GameProgress.Instance.progressData.playerMaxHealth = 100;
             }
             
             currentHealthTimer = maxHealth; // Inicializamos reloj interno
-            GameProgress.Instance.progressData.playerHealth = maxHealth; // Sanamos por completo al empezar el nivel
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = maxHealth; // Sanamos por completo al empezar el nivel
         }
         else // Si no hay sistema de guardado (juego no conectado)
         {
@@ -93,10 +93,10 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
         if (useAsTimer) // Si estamos en modo Contrarreloj (La vida baja sola)
         {
             // Pausar daño si es necesario o si ya ganamos el nivel
-            if (isPaused || (LevelComplete.Instance != null && LevelComplete.Instance.IsLevelCompleted())) return;
+            if (isPaused || (RE_LevelComplete.Instance != null && RE_LevelComplete.Instance.IsLevelCompleted())) return;
 
             // Calcular cuánto equivale 1 segundo de vida en porcentaje
-            int maxHealth = GameProgress.Instance != null ? GameProgress.Instance.progressData.playerMaxHealth : 100;
+            int maxHealth = RE_GameProgress.Instance != null ? RE_GameProgress.Instance.progressData.playerMaxHealth : 100;
             if (maxHealth <= 0) maxHealth = 100; // Evitar división por cero
 
             float decreaseRate = (float)maxHealth / levelDuration; // Cuánta vida quitamos por segundo de la vida real
@@ -105,7 +105,7 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
             if (currentHealthTimer < 0) currentHealthTimer = 0; // Evitamos vidas negativas (-5)
 
             // Guardamos la nueva vida en el progreso general
-            if (GameProgress.Instance != null) GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
+            if (RE_GameProgress.Instance != null) RE_GameProgress.Instance.progressData.RE_PlayerHealth = Mathf.CeilToInt(currentHealthTimer);
 
             UpdateHealthUI(); // Actualizamos gráficas
 
@@ -125,25 +125,25 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
     /// </summary>
     public void TakeDamage(int amount) // Función pública para que zonas como el fuego nos puedan hacer daño
     {
-        if (GameProgress.Instance == null) return; // Si no hay donde guardar, ignoramos
+        if (RE_GameProgress.Instance == null) return; // Si no hay donde guardar, ignoramos
 
         if (useAsTimer) // Si estamos en modo tiempo, restamos segundos
         {
             currentHealthTimer -= amount;
             if (currentHealthTimer < 0) currentHealthTimer = 0;
-            GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = Mathf.CeilToInt(currentHealthTimer);
         }
         else // Modo daño clásico (por golpes)
         {
-            GameProgress.Instance.progressData.playerHealth -= amount;
-            if (GameProgress.Instance.progressData.playerHealth < 0) GameProgress.Instance.progressData.playerHealth = 0;
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth -= amount;
+            if (RE_GameProgress.Instance.progressData.RE_PlayerHealth < 0) RE_GameProgress.Instance.progressData.RE_PlayerHealth = 0;
         }
 
         UpdateHealthUI(); // Refrescar pantalla
-        GameProgress.Instance.SaveProgress(); // Guardar avance
+        RE_GameProgress.Instance.SaveProgress(); // Guardar avance
 
         // Morimos si la vida es 0
-        if (GameProgress.Instance.progressData.playerHealth <= 0) Die();
+        if (RE_GameProgress.Instance.progressData.RE_PlayerHealth <= 0) Die();
     }
 
     /// <summary>
@@ -151,25 +151,25 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
     /// </summary>
     public void Heal(int amount) // Función para curarnos (botiquines, pociones)
     {
-        if (GameProgress.Instance == null) return;
+        if (RE_GameProgress.Instance == null) return;
 
-        int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Límite máximo
+        int maxHealth = RE_GameProgress.Instance.progressData.playerMaxHealth; // Límite máximo
         if (maxHealth <= 0) maxHealth = 100;
         
         if (useAsTimer) // Mismas reglas que TakeDamage, pero sumando
         {
             currentHealthTimer += amount;
             if (currentHealthTimer > maxHealth) currentHealthTimer = maxHealth;
-            GameProgress.Instance.progressData.playerHealth = Mathf.CeilToInt(currentHealthTimer);
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = Mathf.CeilToInt(currentHealthTimer);
         }
         else
         {
-            GameProgress.Instance.progressData.playerHealth += amount;
-            if (GameProgress.Instance.progressData.playerHealth > maxHealth) GameProgress.Instance.progressData.playerHealth = maxHealth;
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth += amount;
+            if (RE_GameProgress.Instance.progressData.RE_PlayerHealth > maxHealth) RE_GameProgress.Instance.progressData.RE_PlayerHealth = maxHealth;
         }
 
         UpdateHealthUI();
-        GameProgress.Instance.SaveProgress();
+        RE_GameProgress.Instance.SaveProgress();
     }
 
     /// <summary>
@@ -177,10 +177,10 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
     /// </summary>
     public void UpdateHealthUI() // Función interna que sincroniza las matemáticas con las barras de la pantalla
     {
-        if (GameProgress.Instance == null) return;
+        if (RE_GameProgress.Instance == null) return;
 
-        int current = GameProgress.Instance.progressData.playerHealth; // Vida actual numérica
-        int max = GameProgress.Instance.progressData.playerMaxHealth; // Vida máxima numérica
+        int current = RE_GameProgress.Instance.progressData.RE_PlayerHealth; // Vida actual numérica
+        int max = RE_GameProgress.Instance.progressData.playerMaxHealth; // Vida máxima numérica
         if (max <= 0) max = 100; // Evitar que el juego reviente al dividir entre cero
 
         float percent = (float)current / max; // Cálculo del porcentaje (0.0 a 1.0) para las barras
@@ -216,17 +216,17 @@ public class PlayerHealth : MonoBehaviour // Clase principal que maneja la vida 
 
     private void Die() // Función de muerte
     {
-        Debug.Log("[PlayerHealth] El jugador ha muerto."); // Aviso de sistema
+        Debug.Log("[RE_PlayerHealth] El jugador ha muerto."); // Aviso de sistema
         
         // Restauramos la salud al tope en los archivos de guardado para la siguiente partida
-        if (GameProgress.Instance != null)
+        if (RE_GameProgress.Instance != null)
         {
-            GameProgress.Instance.progressData.playerHealth = GameProgress.Instance.progressData.playerMaxHealth;
-            GameProgress.Instance.SaveProgress();
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = RE_GameProgress.Instance.progressData.playerMaxHealth;
+            RE_GameProgress.Instance.SaveProgress();
         }
 
         // Manda al jugador a la escena de GameOver
-        if (LevelTransitionManager.Instance != null) LevelTransitionManager.Instance.TransitionToScene(gameOverSceneName);
+        if (RE_LevelTransitionManager.Instance != null) RE_LevelTransitionManager.Instance.TransitionToScene(gameOverSceneName);
         else SceneManager.LoadScene(gameOverSceneName);
     }
 }

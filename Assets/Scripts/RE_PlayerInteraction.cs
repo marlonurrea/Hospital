@@ -1,7 +1,7 @@
 using UnityEngine; // Herramientas básicas de Unity para scripts
 using UnityEngine.InputSystem; // Herramientas modernas para detectar botones (teclado/mando)
 
-public class PlayerInteraction : MonoBehaviour // Clase principal para que el jugador pueda interactuar con el entorno
+public class RE_PlayerInteraction : MonoBehaviour // Clase principal para que el jugador pueda interactuar con el entorno
 {
     public enum DetectionMethod // Enumera las dos formas en que podemos detectar objetos
     {

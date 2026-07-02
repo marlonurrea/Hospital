@@ -1,6 +1,6 @@
 using UnityEngine; // Importamos las herramientas principales de Unity para usar scripts y componentes
 
-public class DamageZone : MonoBehaviour // Define la clase principal para la zona de daño; hereda de MonoBehaviour
+public class RE_DamageZone : MonoBehaviour // Define la clase principal para la zona de daño; hereda de MonoBehaviour
 {
     [Header("Configuración del Daño")] // Agrupa las variables de daño en el Inspector de Unity
     [Tooltip("Cantidad de daño infligido al jugador.")] // Explica en el Inspector para qué sirve la variable
@@ -60,19 +60,19 @@ public class DamageZone : MonoBehaviour // Define la clase principal para la zon
 
     private bool IsPlayer(GameObject obj) // Método auxiliar creado para no repetir código. Verifica si un objeto es el jugador
     {
-        // Retorna verdadero (true) si el objeto tiene la etiqueta "Player" o tiene el componente "PlayerMovement"
-        return obj.CompareTag("Player") || obj.GetComponent<PlayerMovement>() != null;
+        // Retorna verdadero (true) si el objeto tiene la etiqueta "Player" o tiene el componente "RE_PlayerMovement"
+        return obj.CompareTag("Player") || obj.GetComponent<RE_PlayerMovement>() != null;
     }
 
     private void ApplyDamage() // Método responsable de ordenar que se reste vida al jugador
     {
-        if (PlayerHealth.Instance != null) // Nos aseguramos de que exista el script principal de salud del jugador en la escena
+        if (RE_PlayerHealth.Instance != null) // Nos aseguramos de que exista el script principal de salud del jugador en la escena
         {
-            PlayerHealth.Instance.TakeDamage(damageAmount); // Le indicamos al script de salud que reste la cantidad de daño especificada
+            RE_PlayerHealth.Instance.TakeDamage(damageAmount); // Le indicamos al script de salud que reste la cantidad de daño especificada
         }
         else // Si no hay sistema de salud (por ejemplo, si el jugador murió o no se cargó bien)
         {
-            Debug.LogWarning("[DamageZone] Intento de infligir daño pero no se encontró PlayerHealth en la escena."); // Mostramos una advertencia
+            Debug.LogWarning("[RE_DamageZone] Intento de infligir daño pero no se encontró RE_PlayerHealth en la escena."); // Mostramos una advertencia
         }
     }
 }

@@ -54,7 +54,7 @@ public class FindMissingScriptsWindow : EditorWindow
     public static void ResetSavedProgress()
     {
         // Buscar el componente GameProgress en la escena para leer su clave de guardado real
-        GameProgress gp = GameObject.FindAnyObjectByType<GameProgress>();
+        RE_GameProgress gp = GameObject.FindAnyObjectByType<RE_GameProgress>();
         string keyToDelete = "HospitalGameProgress"; // Fallback por defecto
 
         if (gp != null)

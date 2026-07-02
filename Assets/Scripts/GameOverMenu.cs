@@ -23,21 +23,21 @@ public class GameOverMenu : MonoBehaviour // Clase principal para el menú de de
     public void RestartLevel() // Método que se asigna al botón de "Reintentar" o "Reiniciar"
     {
         // Si existe un sistema de guardado de progreso
-        if (GameProgress.Instance != null)
+        if (RE_GameProgress.Instance != null)
         {
-            GameProgress.Instance.ResetLevelProgressOnly(); // Borramos el progreso de este nivel fallido
+            RE_GameProgress.Instance.ResetLevelProgressOnly(); // Borramos el progreso de este nivel fallido
             
-            int maxHealth = GameProgress.Instance.progressData.playerMaxHealth; // Obtenemos la salud máxima
+            int maxHealth = RE_GameProgress.Instance.progressData.playerMaxHealth; // Obtenemos la salud máxima
             if (maxHealth <= 0) maxHealth = 100; // Evitamos un error donde la salud sea 0 al iniciar
             
-            GameProgress.Instance.progressData.playerHealth = maxHealth; // Restauramos la vida al máximo
-            GameProgress.Instance.SaveProgress(); // Guardamos estos cambios de reinicio
+            RE_GameProgress.Instance.progressData.RE_PlayerHealth = maxHealth; // Restauramos la vida al máximo
+            RE_GameProgress.Instance.SaveProgress(); // Guardamos estos cambios de reinicio
         }
 
         // Si tenemos un sistema de transiciones de pantalla (fade in/out)
-        if (LevelTransitionManager.Instance != null)
+        if (RE_LevelTransitionManager.Instance != null)
         {
-            LevelTransitionManager.Instance.TransitionToScene(levelSceneName); // Usamos transición suave
+            RE_LevelTransitionManager.Instance.TransitionToScene(levelSceneName); // Usamos transición suave
         }
         else // Si no hay transiciones suaves...
         {
@@ -50,9 +50,9 @@ public class GameOverMenu : MonoBehaviour // Clase principal para el menú de de
     /// </summary>
     public void LoadMainMenu() // Método que se asigna al botón "Salir al menú"
     {
-        if (LevelTransitionManager.Instance != null) // Si hay transiciones suaves
+        if (RE_LevelTransitionManager.Instance != null) // Si hay transiciones suaves
         {
-            LevelTransitionManager.Instance.TransitionToScene(mainMenuSceneName); // Transición al menú principal
+            RE_LevelTransitionManager.Instance.TransitionToScene(mainMenuSceneName); // Transición al menú principal
         }
         else
         {

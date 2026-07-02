@@ -12,7 +12,7 @@ public class GameProgressData // Clase contenedora de datos puros, sin lógica
 {
     [Header("Datos Generales")]
     public string currentSceneName = "Hospital_Lobby"; // Último mapa en el que estuvo el jugador
-    public int playerHealth = 100; // Vida actual con la que se guardó
+    public int RE_PlayerHealth = 100; // Vida actual con la que se guardó
     public int playerMaxHealth = 100; // Capacidad máxima de vida
 
     [Header("Progreso del Juego")]
@@ -33,10 +33,10 @@ public class GameProgressData // Clase contenedora de datos puros, sin lógica
     public bool reached100 = false; // ¿Completó todo?
 }
 
-public class GameProgress : MonoBehaviour // Clase principal que maneja los datos y la interfaz del progreso
+public class RE_GameProgress : MonoBehaviour // Clase principal que maneja los datos y la interfaz del progreso
 {
-    // Singleton para que cualquier archivo pueda llamar a 'GameProgress.Instance' globalmente
-    public static GameProgress Instance { get; private set; }
+    // Singleton para que cualquier archivo pueda llamar a 'RE_GameProgress.Instance' globalmente
+    public static RE_GameProgress Instance { get; private set; }
 
     [Header("Datos de Progreso")]
     public GameProgressData progressData = new GameProgressData(); // Crea un objeto de nuestra clase contenedora de arriba
@@ -156,11 +156,11 @@ public class GameProgress : MonoBehaviour // Clase principal que maneja los dato
             string json = JsonUtility.ToJson(progressData, true); // Convierte los datos a un texto JSON
             PlayerPrefs.SetString(saveKey, json); // Guarda el texto largo en el sistema bajo nuestro nombre de archivo
             PlayerPrefs.Save(); // Obliga al disco a escribir
-            Debug.Log("[GameProgress] Progreso guardado con éxito.");
+            Debug.Log("[RE_GameProgress] Progreso guardado con éxito.");
         }
         catch (System.Exception e) // Si falla...
         {
-            Debug.LogError($"[GameProgress] Error al guardar el progreso: {e.Message}"); // Reportar error
+            Debug.LogError($"[RE_GameProgress] Error al guardar el progreso: {e.Message}"); // Reportar error
         }
     }
 
@@ -175,17 +175,17 @@ public class GameProgress : MonoBehaviour // Clase principal que maneja los dato
             {
                 string json = PlayerPrefs.GetString(saveKey); // Extraemos todo el texto
                 JsonUtility.FromJsonOverwrite(json, progressData); // Lo inyectamos en nuestra clase actual
-                Debug.Log("[GameProgress] Progreso cargado con éxito.");
+                Debug.Log("[RE_GameProgress] Progreso cargado con éxito.");
             }
             catch (System.Exception e) // Si el archivo está corrupto
             {
-                Debug.LogError($"[GameProgress] Partida corrupta. Iniciando por defecto: {e.Message}");
+                Debug.LogError($"[RE_GameProgress] Partida corrupta. Iniciando por defecto: {e.Message}");
                 progressData = new GameProgressData(); // Empezamos de cero si se corrompió
             }
         }
         else // Si es la primera vez que juegan
         {
-            Debug.Log("[GameProgress] No se encontró partida. Iniciando nueva.");
+            Debug.Log("[RE_GameProgress] No se encontró partida. Iniciando nueva.");
             progressData = new GameProgressData(); // Crea contenedor vacío
         }
         ActualizarUI(GetProgressPercentage()); // Mostramos en pantalla lo que hayamos cargado
@@ -271,7 +271,7 @@ public class GameProgress : MonoBehaviour // Clase principal que maneja los dato
         if (percentage >= 100f && !progressData.reached100)
         {
             progressData.reached100 = true; // Confirmamos que ya hicimos todo
-            OnProgress100?.Invoke(); // Dispara la orden que finaliza el nivel (escuchada por LevelComplete.cs)
+            OnProgress100?.Invoke(); // Dispara la orden que finaliza el nivel (escuchada por RE_LevelComplete.cs)
         }
     }
 

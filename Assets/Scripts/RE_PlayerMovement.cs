@@ -2,7 +2,7 @@ using UnityEngine; // Motor físico y herramientas de Unity
 using UnityEngine.InputSystem; // Sistema moderno para detectar controles de mando o teclado
 
 [RequireComponent(typeof(CharacterController))] // Obliga a Unity a ponerle un controlador físico de cápsula a este objeto
-public class PlayerMovement : MonoBehaviour // Clase principal para controlar el movimiento del jugador
+public class RE_PlayerMovement : MonoBehaviour // Clase principal para controlar el movimiento del jugador
 {
     [Header("Movimiento")] // Título en el Inspector
     [Tooltip("Velocidad de movimiento al caminar.")]

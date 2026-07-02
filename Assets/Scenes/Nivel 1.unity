@@ -1677,8 +1677,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Ah para hacer su cita se encuentra saliendo de esta sala al fondo a la
-    derecha
+  m_text: Enfermera
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3134,7 +3133,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Hola chamito  six seven '
+  m_text: 'Bienvenido a Hospital Uros, para facturar tu cita ve a mano izquierda
+    al fondo y voltea a la derecha y ahi encontraras la zona de facturacion
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5459,7 +5461,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: aqui tiene su cita chamito
+  m_text: hola vas a facturar? ve al fondo y voltea a la derecha.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10261,7 +10263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   progressData:
     currentSceneName: Hospital_Lobby
-    playerHealth: 100
+    RE_PlayerHealth: 100
     playerMaxHealth: 100
     completedTasks: []
     keycardsObtained: []
@@ -11997,7 +11999,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Si buscas hacer una cita creo que es llendo a la derecha o izquierda
+  m_text: hola buscas facturar una cita? ve atras al fondo y voltea a tu izquierda.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

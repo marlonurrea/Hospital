@@ -1,7 +1,7 @@
 using UnityEngine; // Funciones básicas de Unity
 using UnityEngine.InputSystem; // Sistema moderno para detectar controles y teclado
 
-public class ObjectInteractTest : MonoBehaviour // Clase de prueba para verificar que la interacción funciona
+public class RE_ObjectInteractTest : MonoBehaviour // Clase de prueba para verificar que la interacción funciona
 {
     [Header("Configuración de Interacción")]
     [Tooltip("Distancia máxima a la que debe estar el jugador para interactuar.")]
@@ -17,7 +17,7 @@ public class ObjectInteractTest : MonoBehaviour // Clase de prueba para verifica
         // Busca automáticamente al jugador por su etiqueta ("Player")
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform; // Si lo encuentra, guarda su ubicación
-        else Debug.LogWarning("[ObjectInteractTest] No se encontró a nadie con el Tag 'Player'."); // Aviso de error
+        else Debug.LogWarning("[RE_ObjectInteractTest] No se encontró a nadie con el Tag 'Player'."); // Aviso de error
     }
 
     void Update() // Se ejecuta cada fotograma

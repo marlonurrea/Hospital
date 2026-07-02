@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SimpleInteractable : MonoBehaviour, IInteractable // Objeto de prueba súper básico con el que se puede interactuar
+public class RE_SimpleInteractable : MonoBehaviour, IInteractable // Objeto de prueba súper básico con el que se puede interactuar
 {
     [Header("Configuración de Interacción")]
     [Tooltip("El mensaje que aparecerá en pantalla cuando el jugador se acerque.")]
